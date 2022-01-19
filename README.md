@@ -7,7 +7,6 @@ Harbour Commander is a lightweight, cross-platform file manager with a dual-pane
 - Build and run:
 
    ```
-   cd hc/hc
    hbmk2 hc.prg
    ./hc
    ```
