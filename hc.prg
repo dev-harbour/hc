@@ -66,6 +66,9 @@ PROCEDURE Main()
 
    sdl_LoadFont( pSdl, "./font/9x18.pcf.gz", 18 )
 
+   hb_cdpSelect( "UTF8EX" )
+   hb_SetTermCP( hb_cdpTerm() )
+
    aLeftPanel  := hc_init()
    aRightPanel := hc_init()
 
@@ -254,7 +257,7 @@ STATIC PROCEDURE hc_drawPanel( pSdl, aActivePanel, aSelectedPanel )
    i += aSelectedPanel[ _rowNo ]
    FOR nRow := aSelectedPanel[ _row ] + 1 TO aSelectedPanel[ _maxRow ] - 1
 
-      IF i < aSelectedPanel[ _filesCount ]
+      IF i <= aSelectedPanel[ _filesCount ]
 
       // Pomijamy wyświetlanie katalogu "."
       IF aSelectedPanel[ _directory ][ i ][ F_NAME ] == "."
@@ -321,7 +324,7 @@ STATIC FUNCTION hc_findLongestName( aSelectedPanel )
 
    FOR i := 1 TO aSelectedPanel[ _filesCount ]
 
-      nCurrentNameLength := hb_utf8Len( aSelectedPanel[ _directory ][ i ][ F_NAME ] )
+      nCurrentNameLength := Len( aSelectedPanel[ _directory ][ i ][ F_NAME ] )
 
       IF nCurrentNameLength > nLongestName
          nLongestName := nCurrentNameLength
