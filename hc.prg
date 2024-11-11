@@ -109,14 +109,14 @@ PROCEDURE Main()
                         aActivePanel := aRightPanel
                         aActivePanel[ _cmdLine ] := aLeftPanel[ _cmdLine ]
                         aActivePanel[ _cmdCol  ] := aLeftPanel[ _cmdCol ]
-                        aLeftPanel[ _cmdLine ] := ""
-                        aLeftPanel[ _cmdCol  ] := 0
+                        aLeftPanel[   _cmdLine ] := ""
+                        aLeftPanel[   _cmdCol  ] := 0
                      ELSE
                         aActivePanel := aLeftPanel
                         aActivePanel[ _cmdLine ] := aRightPanel[ _cmdLine ]
                         aActivePanel[ _cmdCol  ] := aRightPanel[ _cmdCol ]
-                        aRightPanel[ _cmdLine ] := ""
-                        aRightPanel[ _cmdCol  ] := 0
+                        aRightPanel[  _cmdLine ] := ""
+                        aRightPanel[  _cmdCol  ] := 0
                      ENDIF
                   ENDIF
                   EXIT
@@ -194,14 +194,24 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
    aSelectedPanel[ _directory ] := Directory( aSelectedPanel[ _currentDir ], "HSD" )
 
    FOR i := 1 TO Len( aSelectedPanel[ _directory ] )
-      IF aSelectedPanel[ _directory ][ i ][ 1 ] != "." .OR. aSelectedPanel[ _directory ][ i ][ 1 ] == ".."
          AAdd( aTempFiles, aSelectedPanel[ _directory ][ i ] )
          AAdd( aTempFiles[ Len( aTempFiles ) ], .T. )
-      ENDIF
    NEXT
 
    aSelectedPanel[ _directory ] := aTempFiles
    aSelectedPanel[ _filesCount ] := Len( aTempFiles )
+
+   // Sortowanie alfabetyczne nazw
+   ASORT( aSelectedPanel[ _directory ],,, { | x, y | UPPER( x[ F_NAME ] ) < UPPER( y[ F_NAME ] ) } )
+
+   // Katalogi ".." zawsze na początku
+   ASORT( aSelectedPanel[ _directory ],,, { | x, y | x[ F_NAME ] == ".." .OR. ( y[ F_NAME ] != ".." .AND. UPPER( x[ F_NAME ] ) < UPPER( y[ F_NAME ] ) ) } )
+
+   // Katalogi przed plikami
+   ASORT( aSelectedPanel[ _directory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
+
+   // Pliki ukryte na końcu
+   ASORT( aSelectedPanel[ _directory ],,, { | x, y | !( "H" $ x[ F_ATTR ] ) .AND. ( "H" $ y[ F_ATTR ] ) } )
 
 RETURN aSelectedPanel
 
@@ -223,13 +233,13 @@ hc_drawPanel( pSdl, aActivePanel, aSelectedPanel ) --> NIL
 STATIC PROCEDURE hc_drawPanel( pSdl, aActivePanel, aSelectedPanel )
 
    LOCAL i := 1
-   LOCAL row
+   LOCAL nRow
    LOCAL nLongestName := 4
    LOCAL nLongestSize
    LOCAL nLongestAttr
-   LOCAL paddedString
-   LOCAL paddedResult
-   LOCAL selectedColor
+   LOCAL cPaddedString
+   LOCAL cPaddedResult
+   LOCAL cSelectedColor
 
    IF aActivePanel == aSelectedPanel
       sdl_drawBox( pSdl, aSelectedPanel[ _col ], aSelectedPanel[ _row ], aSelectedPanel[ _maxCol ], aSelectedPanel[ _maxRow ], BOX_DOUBLE, "F1F1F1/323232" )
@@ -242,32 +252,37 @@ STATIC PROCEDURE hc_drawPanel( pSdl, aActivePanel, aSelectedPanel )
    nLongestAttr := hc_findLongestAttr( aSelectedPanel )
 
    i += aSelectedPanel[ _rowNo ]
-   FOR row := aSelectedPanel[ _row ] + 1 TO aSelectedPanel[ _maxRow ] - 1
+   FOR nRow := aSelectedPanel[ _row ] + 1 TO aSelectedPanel[ _maxRow ] - 1
 
       IF i < aSelectedPanel[ _filesCount ]
 
-         paddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
+      // Pomijamy wyświetlanie katalogu "."
+      IF aSelectedPanel[ _directory ][ i ][ F_NAME ] == "."
+         ++i
+      ENDIF
+
+      cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
             aSelectedPanel[ _directory ][ i ][ F_NAME ],;
             aSelectedPanel[ _directory ][ i ][ F_SIZE ],;
             aSelectedPanel[ _directory ][ i ][ F_DATE ],;
             aSelectedPanel[ _directory ][ i ][ F_TIME ],;
             aSelectedPanel[ _directory ][ i ][ F_ATTR ] )
 
-         paddedResult := PadR( paddedString, aSelectedPanel[ _maxCol ] - 2 )
+         cPaddedResult := PadR( cPaddedString, aSelectedPanel[ _maxCol ] - 2 )
 
          IF aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _rowBar ] + aSelectedPanel[ _rowNo ]
 
             IF !aSelectedPanel[ _directory ][ i ][ F_MODE ]
-               selectedColor := "323232/FF4D4D"
+               cSelectedColor := "323232/FF4D4D"
             ELSE
-               selectedColor := "323232/00FF00"
+               cSelectedColor := "323232/00FF00"
             ENDIF
 
          ELSE
-            selectedColor := hc_selectColor( aSelectedPanel[ _directory ][ i ][ F_ATTR ], aSelectedPanel[ _directory ][ i ][ F_MODE ] )
+            cSelectedColor := hc_selectColor( aSelectedPanel[ _directory ][ i ][ F_ATTR ], aSelectedPanel[ _directory ][ i ][ F_MODE ] )
          ENDIF
 
-         sdl_drawFont( pSdl, aSelectedPanel[ _col ] + 1, row, paddedResult, selectedColor )
+         sdl_drawFont( pSdl, aSelectedPanel[ _col ] + 1, nRow, cPaddedResult, cSelectedColor )
 
          ++i
 
