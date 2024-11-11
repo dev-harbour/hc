@@ -193,28 +193,31 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
 
    LOCAL i, aTempFiles := {}
 
+   // Ustawienie bieżącego katalogu
    aSelectedPanel[ _currentDir ] := hb_defaultValue( cDir, hb_cwd() )
    aSelectedPanel[ _directory ] := Directory( aSelectedPanel[ _currentDir ], "HSD" )
 
+   // Dodawanie elementów do tymczasowej tablicy
    FOR i := 1 TO Len( aSelectedPanel[ _directory ] )
       AAdd( aTempFiles, aSelectedPanel[ _directory ][ i ] )
+      // Dodaje wartość .T. na końcu każdego wpisu w aTempFiles
       AAdd( aTempFiles[ Len( aTempFiles ) ], .T. )
    NEXT
 
    aSelectedPanel[ _directory ] := aTempFiles
    aSelectedPanel[ _filesCount ] := Len( aTempFiles )
 
-   // Sortowanie alfabetyczne nazw
-   ASORT( aSelectedPanel[ _directory ],,, { | x, y | UPPER( x[ F_NAME ] ) < UPPER( y[ F_NAME ] ) } )
+   // 1. Katalog ".." zawsze na początku
+   ASort( aSelectedPanel[ _directory ],,, { | x | x[ F_NAME ] == ".." } )
 
-   // Katalogi ".." zawsze na początku
-   ASORT( aSelectedPanel[ _directory ],,, { | x, y | x[ F_NAME ] == ".." .OR. ( y[ F_NAME ] != ".." .AND. UPPER( x[ F_NAME ] ) < UPPER( y[ F_NAME ] ) ) } )
+   // 2. Katalog "." zaraz po ".." (nie jest drukowany w hc_drawPanel )
+   ASORT( aSelectedPanel[ _directory ],,, { | x, y | ( x[ F_NAME ] == "." ) .AND. ( y[ F_NAME ] != ".." ) } )
 
-   // Katalogi przed plikami
-   ASORT( aSelectedPanel[ _directory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
+   // 3. Zwykłe katalogi przed ukrytymi katalogami
+   ASort( aSelectedPanel[ _directory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "H" $ x[ F_ATTR ] ) .AND. ( "H" $ y[ F_ATTR ] ) } )
 
-   // Pliki ukryte na końcu
-   ASORT( aSelectedPanel[ _directory ],,, { | x, y | !( "H" $ x[ F_ATTR ] ) .AND. ( "H" $ y[ F_ATTR ] ) } )
+   // 4. Katalogi przed plikami (bez względu na ukrycie)
+   ASort( aSelectedPanel[ _directory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
 
 RETURN aSelectedPanel
 
@@ -259,7 +262,7 @@ STATIC PROCEDURE hc_drawPanel( pSdl, aActivePanel, aSelectedPanel )
 
       IF i <= aSelectedPanel[ _filesCount ]
 
-      // Pomijamy wyświetlanie katalogu "."
+      // Pomijamy wyświetlanie bieżącego katalogu "."
       IF aSelectedPanel[ _directory ][ i ][ F_NAME ] == "."
          ++i
       ENDIF
