@@ -194,8 +194,8 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
    aSelectedPanel[ _directory ] := Directory( aSelectedPanel[ _currentDir ], "HSD" )
 
    FOR i := 1 TO Len( aSelectedPanel[ _directory ] )
-         AAdd( aTempFiles, aSelectedPanel[ _directory ][ i ] )
-         AAdd( aTempFiles[ Len( aTempFiles ) ], .T. )
+      AAdd( aTempFiles, aSelectedPanel[ _directory ][ i ] )
+      AAdd( aTempFiles[ Len( aTempFiles ) ], .T. )
    NEXT
 
    aSelectedPanel[ _directory ] := aTempFiles
