@@ -130,7 +130,7 @@ PROCEDURE Main()
 
                CASE SDL_WINDOWEVENT
 
-                  IF sdl_EventWindowEvent( pEvent ) == SDL_WINDOWEVENT_CLOSE
+                  IF( sdl_EventWindowEvent( pEvent ) == SDL_WINDOWEVENT_CLOSE )
                      lQuit := .T.
                   ENDIF
                   EXIT
@@ -145,8 +145,8 @@ PROCEDURE Main()
 
                      CASE SDLK_TAB
 
-                        IF lVisiblePanels
-                           IF aActivePanel == aLeftPanel
+                        IF( lVisiblePanels )
+                           IF( aActivePanel == aLeftPanel )
                               aActivePanel := aRightPanel
                               aActivePanel[ _cCmdLine ] := aLeftPanel[ _cCmdLine ]
                               aActivePanel[ _nCmdCol  ] := aLeftPanel[ _nCmdCol ]
@@ -164,7 +164,7 @@ PROCEDURE Main()
 
                      OTHERWISE
 
-                        IF sdl_EventKeyKeysymSym( pEvent ) == SDLK_o .AND. hb_BitAnd( sdl_GetModState(), KMOD_LCTRL ) != 0
+                        IF( sdl_EventKeyKeysymSym( pEvent ) == SDLK_o .AND. hb_BitAnd( sdl_GetModState(), KMOD_LCTRL ) != 0 )
                            lVisiblePanels := hc_togglePanels( lVisiblePanels )
                         ENDIF
                         EXIT
@@ -185,7 +185,7 @@ PROCEDURE Main()
 
       sdl_BeginDraw( pApp )
 
-         IF lVisiblePanels
+         IF( lVisiblePanels )
             aLeftPanel := hc_resize( aLeftPanel, 0, 0, sdl_maxCol( pApp ) / 2, sdl_maxRow( pApp ) - 1 )
             aRightPanel := hc_resize( aRightPanel, sdl_maxCol( pApp ) / 2, 0, sdl_maxCol( pApp ) / 2, sdl_maxRow( pApp ) - 1 )
 
@@ -293,7 +293,7 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
    LOCAL cPaddedResult
    LOCAL cSelectedColor
 
-   IF aActivePanel == aSelectedPanel
+   IF( aActivePanel == aSelectedPanel )
       sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_DOUBLE, "F1F1F1/323232" )
    ELSE
       sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_SINGLE, "F1F1F1/323232" )
@@ -306,10 +306,10 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
    i += aSelectedPanel[ _nRowNo ]
    FOR nRow := aSelectedPanel[ _nRow ] + 1 TO aSelectedPanel[ _nMaxRow ] - 1
 
-      IF i <= aSelectedPanel[ _nFilesCount ]
+      IF( i <= aSelectedPanel[ _nFilesCount ] )
 
          // Pomijamy wyświetlanie bieżącego katalogu "."
-         IF aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] == "."
+         IF( aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] == "." )
             ++i
          ENDIF
 
@@ -322,9 +322,9 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
 
          cPaddedResult := PadR( cPaddedString, aSelectedPanel[ _nMaxCol ] - 2 )
 
-         IF aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
+         IF( aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ] )
 
-            IF !aSelectedPanel[ _aDirectory ][ i ][ F_MODE ]
+            IF( !aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
                cSelectedColor := "323232/FF4D4D"
             ELSE
                cSelectedColor := "323232/00FF00"
@@ -352,7 +352,7 @@ STATIC FUNCTION hc_selectColor( cAttr, lMode )
 
    LOCAL cColor
 
-   IF lMode == .T.
+   IF( lMode == .T. )
       cColor := "EAEAEA/323232"  // Kolor dla pozostałych plików
    ELSEIF cAttr $ "DH,AH"
       cColor := "EAEAEA/72A0E5"
@@ -375,7 +375,7 @@ STATIC FUNCTION hc_findLongestName( aSelectedPanel )
 
       nCurrentNameLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] )
 
-      IF nCurrentNameLength > nLongestName
+      IF( nCurrentNameLength > nLongestName )
          nLongestName := nCurrentNameLength
       ENDIF
 
@@ -396,7 +396,7 @@ STATIC FUNCTION hc_findLongestSize( aSelectedPanel )
 
       nCurrentSizeLength := LenNum( aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ] )
 
-      IF nCurrentSizeLength > nLongestSize
+      IF( nCurrentSizeLength > nLongestSize )
          nLongestSize := nCurrentSizeLength
       ENDIF
 
@@ -417,7 +417,7 @@ STATIC FUNCTION hc_findLongestAttr( aSelectedPanel )
 
       currentAttrLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
 
-      IF currentAttrLength > nLongestAttr
+      IF( currentAttrLength > nLongestAttr )
          nLongestAttr := currentAttrLength
       ENDIF
    NEXT
@@ -450,7 +450,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    cPadLAttr := PadL( cAttr, nLengthAttr )
    cPadLSize := PadL( cSize, nLengthSize )
 
-   IF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
+   IF( aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ] )
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cDate + " " + cTime
    ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cDate
@@ -484,7 +484,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
       cSizeAttrDateTime := " "
    ENDIF
 
-   IF cName == ".."
+   IF( cName == ".." )
       cPadLSizeAttrDateTime := PadL( cSizeAttrDateTime, aSelectedPanel[ _nMaxCol ] - nBorder - nParentDir )
       cFormattedLine := cLBracket + cName + cRBracket + cPadLSizeAttrDateTime
    ELSE
