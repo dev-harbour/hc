@@ -77,6 +77,10 @@ PROCEDURE Main()
    LOCAL aRightPanel
    LOCAL aActivePanel
 
+   LOCAL lWaitMode := .T.
+   LOCAL nTimeBeg
+   LOCAL nTimeEnd
+
    LOCAL lVisiblePanels := .T.
 
    pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
@@ -96,63 +100,88 @@ PROCEDURE Main()
 
    aActivePanel := aLeftPanel
 
+   nTimeBeg := C_time()
+
    DO WHILE( !lQuit )
 
-      pEvent := sdl_WaitEvent()
+      nTimeEnd := C_time()
 
-      SWITCH( sdl_EventType( pEvent ) )
+      IF( lWaitMode .OR. c_difftime( nTimeEnd, nTimeBeg ) >= 10 )
 
-         CASE SDL_QUIT
+         sdl_setCursorVisible( pApp, .T. )
+         pEvent := sdl_WaitEvent()
+         IF( pEvent != NIL )
+            nTimeBeg := C_time()
+            lWaitMode := .F.
+         ENDIF
 
-            lQuit := .T.
-            EXIT
+      ELSE
 
-         CASE SDL_WINDOWEVENT
+         DO WHILE( ( pEvent := sdl_PollEvent() ) != NIL )
 
-            IF sdl_EventWindowEvent( pEvent ) == SDL_WINDOWEVENT_CLOSE
-               lQuit := .T.
-            ENDIF
-            EXIT
+            nTimeBeg := C_time()
 
-         CASE SDL_KEYDOWN
+            SWITCH( sdl_EventType( pEvent ) )
 
-            SWITCH( sdl_EventKeyKeysymSym( pEvent ) )
+               CASE SDL_QUIT
 
-               CASE SDLK_ESCAPE
                   lQuit := .T.
                   EXIT
 
-               CASE SDLK_TAB
+               CASE SDL_WINDOWEVENT
 
-                  IF lVisiblePanels
-                     IF aActivePanel == aLeftPanel
-                        aActivePanel := aRightPanel
-                        aActivePanel[ _cCmdLine ] := aLeftPanel[ _cCmdLine ]
-                        aActivePanel[ _nCmdCol  ] := aLeftPanel[ _nCmdCol ]
-                        aLeftPanel[   _cCmdLine ] := ""
-                        aLeftPanel[   _nCmdCol  ] := 0
-                     ELSE
-                        aActivePanel := aLeftPanel
-                        aActivePanel[ _cCmdLine ] := aRightPanel[ _cCmdLine ]
-                        aActivePanel[ _nCmdCol  ] := aRightPanel[ _nCmdCol ]
-                        aRightPanel[  _cCmdLine ] := ""
-                        aRightPanel[  _nCmdCol  ] := 0
-                     ENDIF
+                  IF sdl_EventWindowEvent( pEvent ) == SDL_WINDOWEVENT_CLOSE
+                     lQuit := .T.
                   ENDIF
                   EXIT
+
+               CASE SDL_KEYDOWN
+
+                  SWITCH( sdl_EventKeyKeysymSym( pEvent ) )
+
+                     CASE SDLK_ESCAPE
+                        lQuit := .T.
+                        EXIT
+
+                     CASE SDLK_TAB
+
+                        IF lVisiblePanels
+                           IF aActivePanel == aLeftPanel
+                              aActivePanel := aRightPanel
+                              aActivePanel[ _cCmdLine ] := aLeftPanel[ _cCmdLine ]
+                              aActivePanel[ _nCmdCol  ] := aLeftPanel[ _nCmdCol ]
+                              aLeftPanel[   _cCmdLine ] := ""
+                              aLeftPanel[   _nCmdCol  ] := 0
+                           ELSE
+                              aActivePanel := aLeftPanel
+                              aActivePanel[ _cCmdLine ] := aRightPanel[ _cCmdLine ]
+                              aActivePanel[ _nCmdCol  ] := aRightPanel[ _nCmdCol ]
+                              aRightPanel[  _cCmdLine ] := ""
+                              aRightPanel[  _nCmdCol  ] := 0
+                           ENDIF
+                        ENDIF
+                        EXIT
+
+                     OTHERWISE
+
+                        IF sdl_EventKeyKeysymSym( pEvent ) == SDLK_o .AND. hb_BitAnd( sdl_GetModState(), KMOD_LCTRL ) != 0
+                           lVisiblePanels := hc_togglePanels( lVisiblePanels )
+                        ENDIF
+                        EXIT
+
+                  ENDSWITCH
 
                OTHERWISE
 
-                  IF sdl_EventKeyKeysymSym( pEvent ) == SDLK_o .AND. hb_BitAnd( sdl_GetModState(), KMOD_LCTRL ) != 0
-                     lVisiblePanels := hc_togglePanels( lVisiblePanels )
-                  ENDIF
-                  EXIT
-
             ENDSWITCH
 
-         OTHERWISE
+         ENDDO
 
-      ENDSWITCH
+         IF( C_difftime( nTimeEnd, nTimeBeg ) >= 10 )
+            lWaitMode := .T.
+         ENDIF
+
+      ENDIF
 
       sdl_BeginDraw( pApp )
 
@@ -279,12 +308,12 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
 
       IF i <= aSelectedPanel[ _nFilesCount ]
 
-      // Pomijamy wyświetlanie bieżącego katalogu "."
-      IF aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] == "."
-         ++i
-      ENDIF
+         // Pomijamy wyświetlanie bieżącego katalogu "."
+         IF aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] == "."
+            ++i
+         ENDIF
 
-      cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
+         cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
             aSelectedPanel[ _aDirectory ][ i ][ F_NAME ],;
             aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ],;
             aSelectedPanel[ _aDirectory ][ i ][ F_DATE ],;
