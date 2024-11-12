@@ -81,6 +81,9 @@ PROCEDURE Main()
    LOCAL nTimeBeg
    LOCAL nTimeEnd
 
+   LOCAL nMaxCol
+   LOCAL nMaxRow
+
    LOCAL lVisiblePanels := .T.
 
    pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
@@ -94,6 +97,9 @@ PROCEDURE Main()
    aRightPanel := hc_init()
 
    Set( _SET_DATEFORMAT, "dd-mm-yyyy" )
+
+   nMaxCol := sdl_maxCol( pApp )
+   nMaxRow := sdl_maxRow( pApp )
 
    aLeftPanel  := hc_fetchList( aLeftPanel, hb_cwd() )
    aRightPanel := hc_fetchList( aRightPanel, hb_cwd() )
@@ -130,9 +136,18 @@ PROCEDURE Main()
 
                CASE SDL_WINDOWEVENT
 
-                  IF( sdl_EventWindowEvent( pEvent ) == SDL_WINDOWEVENT_CLOSE )
-                     lQuit := .T.
-                  ENDIF
+                  SWITCH( sdl_EventWindowEvent( pEvent ) )
+
+                     CASE SDL_WINDOWEVENT_CLOSE
+                        lQuit := .T.
+                        EXIT
+
+                     CASE SDL_WINDOWEVENT_RESIZED
+                        nMaxCol := sdl_maxCol( pApp )
+                        nMaxRow := sdl_maxRow( pApp )
+                        EXIT
+
+                  ENDSWITCH
                   EXIT
 
                CASE SDL_KEYDOWN
@@ -164,12 +179,51 @@ PROCEDURE Main()
 
                      CASE SDLK_DOWN
 
-                        IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 1 .AND. aActivePanel[ _nRowBar ] <= Len( aActivePanel[ _aDirectory ] ) - 1 )
-                           ++aActivePanel[ _nRowBar ]
-                        ELSE
-                           IF( aActivePanel[ _nRowNo ] + aActivePanel[ _nRowBar ] <= Len( aActivePanel[ _aDirectory ] ) - 1 )
-                              ++aActivePanel[ _nRowNo ]
+                        IF( lVisiblePanels )
+                           IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 1 .AND. aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
+                              ++aActivePanel[ _nRowBar ]
+                           ELSE
+                              IF( aActivePanel[ _nRowNo ] + aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
+                                 ++aActivePanel[ _nRowNo ]
+                              ENDIF
                            ENDIF
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_UP
+
+                        IF( lVisiblePanels )
+                           IF( aActivePanel[ _nRowBar ] > 1 )
+                              --aActivePanel[ _nRowBar ]
+                           ELSE
+                              IF( aActivePanel[ _nRowNo ] >= 1 )
+                                 --aActivePanel[ _nRowNo ]
+                              ENDIF
+                           ENDIF
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_PAGEDOWN
+
+                        IF( lVisiblePanels )
+                           IF( aActivePanel[ _nRowBar ] >= nMaxRow - 3 )
+                              IF( aActivePanel[ _nRowNo ] + nMaxRow  <= aActivePanel[ _nItemCount ] )
+                                 aActivePanel[ _nRowNo ] += nMaxRow
+                              ENDIF
+                           ENDIF
+                           aActivePanel[ _nRowBar ] := Min( nMaxRow - 3, aActivePanel[ _nItemCount ] - aActivePanel[ _nRowNo ] )
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_PAGEUP
+
+                        IF( lVisiblePanels )
+                           IF( aActivePanel[ _nRowBar ] <= 1 )
+                              IF( aActivePanel[ _nRowNo ] - nMaxRow >= 0 )
+                                 aActivePanel[ _nRowNo ] -= nMaxRow
+                              ENDIF
+                           ENDIF
+                           aActivePanel[ _nRowBar ] := 1
                         ENDIF
                         EXIT
 
@@ -208,6 +262,8 @@ PROCEDURE Main()
          ENDIF
 
       sdl_EndDraw( pApp )
+
+      HB_SYMBOL_UNUSED( nMaxCol )
 
    ENDDO
 
@@ -257,6 +313,7 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
 
    // Dodanie wartości logicznej `.T.` na końcu każdego wpisu w tablicy
    AEval( aSelectedPanel[ _aDirectory ], { | x | AAdd( x, .T. ) } )
+
    aSelectedPanel[ _nItemCount ] := Len( aSelectedPanel[ _aDirectory ] )
 
    // 1. Katalog ".." zawsze na początku
