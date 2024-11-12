@@ -48,7 +48,7 @@
 #define _nMaxRow               4
 #define _cCurrentDir           5
 #define _aDirectory            6
-#define _nFilesCount           7
+#define _nItemCount           7
 #define _nRowBar               8
 #define _nRowNo                9
 #define _cCmdLine             10
@@ -162,6 +162,17 @@ PROCEDURE Main()
                         ENDIF
                         EXIT
 
+                     CASE SDLK_DOWN
+
+                        IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 1 .AND. aActivePanel[ _nRowBar ] <= Len( aActivePanel[ _aDirectory ] ) - 1 )
+                           ++aActivePanel[ _nRowBar ]
+                        ELSE
+                           IF( aActivePanel[ _nRowNo ] + aActivePanel[ _nRowBar ] <= Len( aActivePanel[ _aDirectory ] ) - 1 )
+                              ++aActivePanel[ _nRowNo ]
+                           ENDIF
+                        ENDIF
+                        EXIT
+
                      OTHERWISE
 
                         IF( sdl_EventKeyKeysymSym( pEvent ) == SDLK_o .AND. hb_BitAnd( sdl_GetModState(), KMOD_LCTRL ) != 0 )
@@ -217,7 +228,7 @@ STATIC FUNCTION hc_init()
    aPanel[ _nMaxRow           ] :=  0
    aPanel[ _cCurrentDir       ] :=  ""
    aPanel[ _aDirectory        ] :=  {}
-   aPanel[ _nFilesCount       ] :=  0
+   aPanel[ _nItemCount       ] :=  0
    aPanel[ _nRowBar           ] :=  1
    aPanel[ _nRowNo            ] :=  0
    aPanel[ _cCmdLine          ] :=  ""
@@ -237,21 +248,16 @@ hc_fetchList( aSelectedPanel, cDir ) --> aSelectedPanel
 ------------------------------------------------------------------------- */
 STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
 
-   LOCAL i, aTempFiles := {}
-
    // Ustawienie bieżącego katalogu
    aSelectedPanel[ _cCurrentDir ] := hb_defaultValue( cDir, hb_cwd() )
    aSelectedPanel[ _aDirectory ] := Directory( aSelectedPanel[ _cCurrentDir ], "HSD" )
 
-   // Dodawanie elementów do tymczasowej tablicy
-   FOR i := 1 TO Len( aSelectedPanel[ _aDirectory ] )
-      AAdd( aTempFiles, aSelectedPanel[ _aDirectory ][ i ] )
-      // Dodaje wartość .T. na końcu każdego wpisu w aTempFiles
-      AAdd( aTempFiles[ Len( aTempFiles ) ], .T. )
-   NEXT
+   // Usunięcie wpisu bieżącego katalogu "." z listy
+   hb_ADel( aSelectedPanel[ _aDirectory ], AScan( aSelectedPanel[ _aDirectory ], { | x | x[ F_NAME ] == "." } ), .T. )
 
-   aSelectedPanel[ _aDirectory ] := aTempFiles
-   aSelectedPanel[ _nFilesCount ] := Len( aTempFiles )
+   // Dodanie wartości logicznej `.T.` na końcu każdego wpisu w tablicy
+   AEval( aSelectedPanel[ _aDirectory ], { | x | AAdd( x, .T. ) } )
+   aSelectedPanel[ _nItemCount ] := Len( aSelectedPanel[ _aDirectory ] )
 
    // 1. Katalog ".." zawsze na początku
    ASort( aSelectedPanel[ _aDirectory ],,, { | x | x[ F_NAME ] == ".." } )
@@ -306,12 +312,7 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
    i += aSelectedPanel[ _nRowNo ]
    FOR nRow := aSelectedPanel[ _nRow ] + 1 TO aSelectedPanel[ _nMaxRow ] - 1
 
-      IF( i <= aSelectedPanel[ _nFilesCount ] )
-
-         // Pomijamy wyświetlanie bieżącego katalogu "."
-         IF( aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] == "." )
-            ++i
-         ENDIF
+      IF( i <= aSelectedPanel[ _nItemCount ] )
 
          cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
             aSelectedPanel[ _aDirectory ][ i ][ F_NAME ],;
@@ -371,7 +372,7 @@ STATIC FUNCTION hc_findLongestName( aSelectedPanel )
    LOCAL nCurrentNameLength
    LOCAL nLongestName := 0
 
-   FOR i := 1 TO aSelectedPanel[ _nFilesCount ]
+   FOR i := 1 TO aSelectedPanel[ _nItemCount ]
 
       nCurrentNameLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] )
 
@@ -392,7 +393,7 @@ STATIC FUNCTION hc_findLongestSize( aSelectedPanel )
    LOCAL nCurrentSizeLength
    LOCAL nLongestSize := 0
 
-   FOR i := 1 TO aSelectedPanel[ _nFilesCount ]
+   FOR i := 1 TO aSelectedPanel[ _nItemCount ]
 
       nCurrentSizeLength := LenNum( aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ] )
 
@@ -413,7 +414,7 @@ STATIC FUNCTION hc_findLongestAttr( aSelectedPanel )
    LOCAL currentAttrLength
    LOCAL nLongestAttr := 0
 
-   FOR i := 1 TO aSelectedPanel[ _nFilesCount ]
+   FOR i := 1 TO aSelectedPanel[ _nItemCount ]
 
       currentAttrLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
 
