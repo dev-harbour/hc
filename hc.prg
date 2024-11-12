@@ -11,6 +11,23 @@
  *
  */
 
+/*
+ * Prefixes used in the code:
+ *
+ * `a` - aArray (arrays)
+ * `b` - bBlock (code blocks)
+ * `c` - cCharacter (strings)
+ * `d` - dDate (dates)
+ * `l` - lLogical (booleans)
+ * `m` - mMemo (memo fields)
+ * `n` - nNumeric (numbers)
+ * `o` - oObject (objects)
+ * `p` - pPointer (pointers)
+ * `s` - sSymbol (symbols)
+ * `u` - uNIL (undefined or NIL values)
+ *
+ */
+
 /* Keeping it tidy */
 #pragma -w3
 #pragma -es2
@@ -25,35 +42,35 @@
 #include "directry.ch"
 
 // ---
-#define _col                  1
-#define _row                  2
-#define _maxCol               3
-#define _maxRow               4
-#define _currentDir           5
-#define _directory            6
-#define _filesCount           7
-#define _rowBar               8
-#define _rowNo                9
-#define _cmdLine             10
-#define _cmdOutput           11
-#define _cmdCol              12
-#define _cmdColNo            13
-#define _isFirstDirectory    14
-#define _isSizeVisible       15
-#define _isAttrVisible       16
-#define _isDateVisible       17
-#define _isTimeVisible       18
+#define _nCol                  1
+#define _nRow                  2
+#define _nMaxCol               3
+#define _nMaxRow               4
+#define _cCurrentDir           5
+#define _aDirectory            6
+#define _nFilesCount           7
+#define _nRowBar               8
+#define _nRowNo                9
+#define _cCmdLine             10
+#define _cCmdOutput           11
+#define _nCmdCol              12
+#define _nCmdColNo            13
+#define _lIsFirstDirectory    14
+#define _lIsSizeVisible       15
+#define _lIsAttrVisible       16
+#define _lIsDateVisible       17
+#define _lIsTimeVisible       18
 
-#define _elements            18
+#define _nElements            18
 // ---
-#define F_MODE               6
+#define F_MODE                 6
 // ---
 
 PROCEDURE Main()
 
    LOCAL lQuit := .F.
 
-   LOCAL pSdl
+   LOCAL pApp
    LOCAL pEvent
 
    LOCAL aLeftPanel
@@ -62,9 +79,9 @@ PROCEDURE Main()
 
    LOCAL lVisiblePanels := .T.
 
-   pSdl := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
+   pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
 
-   sdl_LoadFont( pSdl, "./font/9x18.pcf.gz", 18 )
+   sdl_LoadFont( pApp, "./font/9x18.pcf.gz", 18 )
 
    hb_cdpSelect( "UTF8EX" )
    hb_SetTermCP( hb_cdpTerm() )
@@ -110,16 +127,16 @@ PROCEDURE Main()
                   IF lVisiblePanels
                      IF aActivePanel == aLeftPanel
                         aActivePanel := aRightPanel
-                        aActivePanel[ _cmdLine ] := aLeftPanel[ _cmdLine ]
-                        aActivePanel[ _cmdCol  ] := aLeftPanel[ _cmdCol ]
-                        aLeftPanel[   _cmdLine ] := ""
-                        aLeftPanel[   _cmdCol  ] := 0
+                        aActivePanel[ _cCmdLine ] := aLeftPanel[ _cCmdLine ]
+                        aActivePanel[ _nCmdCol  ] := aLeftPanel[ _nCmdCol ]
+                        aLeftPanel[   _cCmdLine ] := ""
+                        aLeftPanel[   _nCmdCol  ] := 0
                      ELSE
                         aActivePanel := aLeftPanel
-                        aActivePanel[ _cmdLine ] := aRightPanel[ _cmdLine ]
-                        aActivePanel[ _cmdCol  ] := aRightPanel[ _cmdCol ]
-                        aRightPanel[  _cmdLine ] := ""
-                        aRightPanel[  _cmdCol  ] := 0
+                        aActivePanel[ _cCmdLine ] := aRightPanel[ _cCmdLine ]
+                        aActivePanel[ _nCmdCol  ] := aRightPanel[ _nCmdCol ]
+                        aRightPanel[  _cCmdLine ] := ""
+                        aRightPanel[  _nCmdCol  ] := 0
                      ENDIF
                   ENDIF
                   EXIT
@@ -137,20 +154,20 @@ PROCEDURE Main()
 
       ENDSWITCH
 
-      sdl_BeginDraw( pSdl )
+      sdl_BeginDraw( pApp )
 
          IF lVisiblePanels
-            aLeftPanel := hc_resize( aLeftPanel, 0, 0, sdl_maxCol( pSdl ) / 2, sdl_maxRow( pSdl ) - 1 )
-            aRightPanel := hc_resize( aRightPanel, sdl_maxCol( pSdl ) / 2, 0, sdl_maxCol( pSdl ) / 2, sdl_maxRow( pSdl ) - 1 )
+            aLeftPanel := hc_resize( aLeftPanel, 0, 0, sdl_maxCol( pApp ) / 2, sdl_maxRow( pApp ) - 1 )
+            aRightPanel := hc_resize( aRightPanel, sdl_maxCol( pApp ) / 2, 0, sdl_maxCol( pApp ) / 2, sdl_maxRow( pApp ) - 1 )
 
-            hc_drawPanel( pSdl, aActivePanel, aLeftPanel )
-            hc_drawPanel( pSdl, aActivePanel, aRightPanel )
-            sdl_setBackground( pSdl, "F1F1F1" )
+            hc_drawPanel( pApp, aActivePanel, aLeftPanel )
+            hc_drawPanel( pApp, aActivePanel, aRightPanel )
+            sdl_setBackground( pApp, "F1F1F1" )
          ELSE
-            sdl_setBackground( pSdl, "000000" )
+            sdl_setBackground( pApp, "000000" )
          ENDIF
 
-      sdl_EndDraw( pSdl )
+      sdl_EndDraw( pApp )
 
    ENDDO
 
@@ -163,26 +180,26 @@ STATIC FUNCTION hc_init()
 
    LOCAL aPanel
 
-   aPanel := Array( _elements )
+   aPanel := Array( _nElements )
 
-   aPanel[ _col               ] :=  0
-   aPanel[ _row               ] :=  0
-   aPanel[ _maxCol            ] :=  0
-   aPanel[ _maxRow            ] :=  0
-   aPanel[ _currentDir        ] :=  ""
-   aPanel[ _directory         ] :=  {}
-   aPanel[ _filesCount        ] :=  0
-   aPanel[ _rowBar            ] :=  1
-   aPanel[ _rowNo             ] :=  0
-   aPanel[ _cmdLine           ] :=  ""
-   aPanel[ _cmdOutput         ] :=  ""
-   aPanel[ _cmdCol            ] :=  0
-   aPanel[ _cmdColNo          ] :=  0
-   aPanel[ _isFirstDirectory  ] := .T.
-   aPanel[ _isSizeVisible     ] := .T.
-   aPanel[ _isAttrVisible     ] := .T.
-   aPanel[ _isDateVisible     ] := .T.
-   aPanel[ _isTimeVisible     ] := .T.
+   aPanel[ _nCol              ] :=  0
+   aPanel[ _nRow              ] :=  0
+   aPanel[ _nMaxCol           ] :=  0
+   aPanel[ _nMaxRow           ] :=  0
+   aPanel[ _cCurrentDir       ] :=  ""
+   aPanel[ _aDirectory        ] :=  {}
+   aPanel[ _nFilesCount       ] :=  0
+   aPanel[ _nRowBar           ] :=  1
+   aPanel[ _nRowNo            ] :=  0
+   aPanel[ _cCmdLine          ] :=  ""
+   aPanel[ _cCmdOutput        ] :=  ""
+   aPanel[ _nCmdCol           ] :=  0
+   aPanel[ _nCmdColNo         ] :=  0
+   aPanel[ _lIsFirstDirectory ] := .T.
+   aPanel[ _lIsSizeVisible    ] := .T.
+   aPanel[ _lIsAttrVisible    ] := .T.
+   aPanel[ _lIsDateVisible    ] := .T.
+   aPanel[ _lIsTimeVisible    ] := .T.
 
    RETURN aPanel
 
@@ -194,30 +211,30 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
    LOCAL i, aTempFiles := {}
 
    // Ustawienie bieżącego katalogu
-   aSelectedPanel[ _currentDir ] := hb_defaultValue( cDir, hb_cwd() )
-   aSelectedPanel[ _directory ] := Directory( aSelectedPanel[ _currentDir ], "HSD" )
+   aSelectedPanel[ _cCurrentDir ] := hb_defaultValue( cDir, hb_cwd() )
+   aSelectedPanel[ _aDirectory ] := Directory( aSelectedPanel[ _cCurrentDir ], "HSD" )
 
    // Dodawanie elementów do tymczasowej tablicy
-   FOR i := 1 TO Len( aSelectedPanel[ _directory ] )
-      AAdd( aTempFiles, aSelectedPanel[ _directory ][ i ] )
+   FOR i := 1 TO Len( aSelectedPanel[ _aDirectory ] )
+      AAdd( aTempFiles, aSelectedPanel[ _aDirectory ][ i ] )
       // Dodaje wartość .T. na końcu każdego wpisu w aTempFiles
       AAdd( aTempFiles[ Len( aTempFiles ) ], .T. )
    NEXT
 
-   aSelectedPanel[ _directory ] := aTempFiles
-   aSelectedPanel[ _filesCount ] := Len( aTempFiles )
+   aSelectedPanel[ _aDirectory ] := aTempFiles
+   aSelectedPanel[ _nFilesCount ] := Len( aTempFiles )
 
    // 1. Katalog ".." zawsze na początku
-   ASort( aSelectedPanel[ _directory ],,, { | x | x[ F_NAME ] == ".." } )
+   ASort( aSelectedPanel[ _aDirectory ],,, { | x | x[ F_NAME ] == ".." } )
 
    // 2. Katalog "." zaraz po ".." (nie jest drukowany w hc_drawPanel )
-   ASORT( aSelectedPanel[ _directory ],,, { | x, y | ( x[ F_NAME ] == "." ) .AND. ( y[ F_NAME ] != ".." ) } )
+   ASORT( aSelectedPanel[ _aDirectory ],,, { | x, y | ( x[ F_NAME ] == "." ) .AND. ( y[ F_NAME ] != ".." ) } )
 
    // 3. Zwykłe katalogi przed ukrytymi katalogami
-   ASort( aSelectedPanel[ _directory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "H" $ x[ F_ATTR ] ) .AND. ( "H" $ y[ F_ATTR ] ) } )
+   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "H" $ x[ F_ATTR ] ) .AND. ( "H" $ y[ F_ATTR ] ) } )
 
    // 4. Katalogi przed plikami (bez względu na ukrycie)
-   ASort( aSelectedPanel[ _directory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
+   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
 
 RETURN aSelectedPanel
 
@@ -226,17 +243,17 @@ hc_resize( aSelectedPanel, nCol, nRow, nMaxCol, nMaxRow ) --> aSelectedPanel
 ------------------------------------------------------------------------- */
 STATIC FUNCTION hc_resize( aSelectedPanel, nCol, nRow, nMaxCol, nMaxRow )
 
-   aSelectedPanel[ _col    ] := nCol
-   aSelectedPanel[ _row    ] := nRow
-   aSelectedPanel[ _maxCol ] := nMaxCol
-   aSelectedPanel[ _maxRow ] := nMaxRow
+   aSelectedPanel[ _nCol    ] := nCol
+   aSelectedPanel[ _nRow    ] := nRow
+   aSelectedPanel[ _nMaxCol ] := nMaxCol
+   aSelectedPanel[ _nMaxRow ] := nMaxRow
 
 RETURN aSelectedPanel
 
 /* -------------------------------------------------------------------------
-hc_drawPanel( pSdl, aActivePanel, aSelectedPanel ) --> NIL
+hc_drawPanel( pApp, aActivePanel, aSelectedPanel ) --> NIL
 ------------------------------------------------------------------------- */
-STATIC PROCEDURE hc_drawPanel( pSdl, aActivePanel, aSelectedPanel )
+STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
 
    LOCAL i := 1
    LOCAL nRow
@@ -248,47 +265,47 @@ STATIC PROCEDURE hc_drawPanel( pSdl, aActivePanel, aSelectedPanel )
    LOCAL cSelectedColor
 
    IF aActivePanel == aSelectedPanel
-      sdl_drawBox( pSdl, aSelectedPanel[ _col ], aSelectedPanel[ _row ], aSelectedPanel[ _maxCol ], aSelectedPanel[ _maxRow ], BOX_DOUBLE, "F1F1F1/323232" )
+      sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_DOUBLE, "F1F1F1/323232" )
    ELSE
-      sdl_drawBox( pSdl, aSelectedPanel[ _col ], aSelectedPanel[ _row ], aSelectedPanel[ _maxCol ], aSelectedPanel[ _maxRow ], BOX_SINGLE, "F1F1F1/323232" )
+      sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_SINGLE, "F1F1F1/323232" )
    ENDIF
 
    nLongestName := MAX( nLongestName, hc_findLongestName( aSelectedPanel ) )
    nLongestSize := hc_findLongestSize( aSelectedPanel )
    nLongestAttr := hc_findLongestAttr( aSelectedPanel )
 
-   i += aSelectedPanel[ _rowNo ]
-   FOR nRow := aSelectedPanel[ _row ] + 1 TO aSelectedPanel[ _maxRow ] - 1
+   i += aSelectedPanel[ _nRowNo ]
+   FOR nRow := aSelectedPanel[ _nRow ] + 1 TO aSelectedPanel[ _nMaxRow ] - 1
 
-      IF i <= aSelectedPanel[ _filesCount ]
+      IF i <= aSelectedPanel[ _nFilesCount ]
 
       // Pomijamy wyświetlanie bieżącego katalogu "."
-      IF aSelectedPanel[ _directory ][ i ][ F_NAME ] == "."
+      IF aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] == "."
          ++i
       ENDIF
 
       cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
-            aSelectedPanel[ _directory ][ i ][ F_NAME ],;
-            aSelectedPanel[ _directory ][ i ][ F_SIZE ],;
-            aSelectedPanel[ _directory ][ i ][ F_DATE ],;
-            aSelectedPanel[ _directory ][ i ][ F_TIME ],;
-            aSelectedPanel[ _directory ][ i ][ F_ATTR ] )
+            aSelectedPanel[ _aDirectory ][ i ][ F_NAME ],;
+            aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ],;
+            aSelectedPanel[ _aDirectory ][ i ][ F_DATE ],;
+            aSelectedPanel[ _aDirectory ][ i ][ F_TIME ],;
+            aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
 
-         cPaddedResult := PadR( cPaddedString, aSelectedPanel[ _maxCol ] - 2 )
+         cPaddedResult := PadR( cPaddedString, aSelectedPanel[ _nMaxCol ] - 2 )
 
-         IF aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _rowBar ] + aSelectedPanel[ _rowNo ]
+         IF aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
 
-            IF !aSelectedPanel[ _directory ][ i ][ F_MODE ]
+            IF !aSelectedPanel[ _aDirectory ][ i ][ F_MODE ]
                cSelectedColor := "323232/FF4D4D"
             ELSE
                cSelectedColor := "323232/00FF00"
             ENDIF
 
          ELSE
-            cSelectedColor := hc_selectColor( aSelectedPanel[ _directory ][ i ][ F_ATTR ], aSelectedPanel[ _directory ][ i ][ F_MODE ] )
+            cSelectedColor := hc_selectColor( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ], aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
          ENDIF
 
-         sdl_drawFont( pSdl, aSelectedPanel[ _col ] + 1, nRow, cPaddedResult, cSelectedColor )
+         sdl_drawFont( pApp, aSelectedPanel[ _nCol ] + 1, nRow, cPaddedResult, cSelectedColor )
 
          ++i
 
@@ -325,9 +342,9 @@ STATIC FUNCTION hc_findLongestName( aSelectedPanel )
    LOCAL nCurrentNameLength
    LOCAL nLongestName := 0
 
-   FOR i := 1 TO aSelectedPanel[ _filesCount ]
+   FOR i := 1 TO aSelectedPanel[ _nFilesCount ]
 
-      nCurrentNameLength := Len( aSelectedPanel[ _directory ][ i ][ F_NAME ] )
+      nCurrentNameLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] )
 
       IF nCurrentNameLength > nLongestName
          nLongestName := nCurrentNameLength
@@ -346,9 +363,9 @@ STATIC FUNCTION hc_findLongestSize( aSelectedPanel )
    LOCAL nCurrentSizeLength
    LOCAL nLongestSize := 0
 
-   FOR i := 1 TO aSelectedPanel[ _filesCount ]
+   FOR i := 1 TO aSelectedPanel[ _nFilesCount ]
 
-      nCurrentSizeLength := LenNum( aSelectedPanel[ _directory ][ i ][ F_SIZE ] )
+      nCurrentSizeLength := LenNum( aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ] )
 
       IF nCurrentSizeLength > nLongestSize
          nLongestSize := nCurrentSizeLength
@@ -367,9 +384,9 @@ STATIC FUNCTION hc_findLongestAttr( aSelectedPanel )
    LOCAL currentAttrLength
    LOCAL nLongestAttr := 0
 
-   FOR i := 1 TO aSelectedPanel[ _filesCount ]
+   FOR i := 1 TO aSelectedPanel[ _nFilesCount ]
 
-      currentAttrLength := Len( aSelectedPanel[ _directory ][ i ][ F_ATTR ] )
+      currentAttrLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
 
       IF currentAttrLength > nLongestAttr
          nLongestAttr := currentAttrLength
@@ -397,53 +414,53 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    LOCAL cDate := DToC( dDate )
 
    // Ustal długości i wyrównanie na podstawie widocznych elementów panelu
-   IIF( aSelectedPanel[ _isAttrVisible ], nLengthAttr := nLongestAttr, nLengthAttr := 0 )
-   IIF( aSelectedPanel[ _isSizeVisible ], nLengthSize := nLongestSize, nLengthSize := 0 )
+   IIF( aSelectedPanel[ _lIsAttrVisible ], nLengthAttr := nLongestAttr, nLengthAttr := 0 )
+   IIF( aSelectedPanel[ _lIsSizeVisible ], nLengthSize := nLongestSize, nLengthSize := 0 )
 
    // Wyrównanie
    cPadLAttr := PadL( cAttr, nLengthAttr )
    cPadLSize := PadL( cSize, nLengthSize )
 
-   IF aSelectedPanel[ _isSizeVisible ] .AND. aSelectedPanel[ _isAttrVisible ] .AND. aSelectedPanel[ _isDateVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   IF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cDate + " " + cTime
-   ELSEIF aSelectedPanel[ _isSizeVisible ] .AND. aSelectedPanel[ _isAttrVisible ] .AND. aSelectedPanel[ _isDateVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cDate
-   ELSEIF aSelectedPanel[ _isSizeVisible ] .AND. aSelectedPanel[ _isAttrVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cTime
-   ELSEIF aSelectedPanel[ _isSizeVisible ] .AND. aSelectedPanel[ _isAttrVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr
-   ELSEIF aSelectedPanel[ _isSizeVisible ] .AND. aSelectedPanel[ _isDateVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cDate + " " + cTime
-   ELSEIF aSelectedPanel[ _isSizeVisible  ] .AND. aSelectedPanel[ _isDateVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible  ] .AND. aSelectedPanel[ _lIsDateVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cDate
-   ELSEIF aSelectedPanel[ _isSizeVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cTime
-   ELSEIF aSelectedPanel[ _isSizeVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ]
       cSizeAttrDateTime := cPadLSize
-   ELSEIF aSelectedPanel[ _isAttrVisible ] .AND. aSelectedPanel[ _isDateVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLAttr + " " + cDate + " " + cTime
-   ELSEIF aSelectedPanel[ _isAttrVisible ] .AND. aSelectedPanel[ _isDateVisible ]
+   ELSEIF aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ]
       cSizeAttrDateTime := cPadLAttr + " " + cDate
-   ELSEIF aSelectedPanel[ _isAttrVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLAttr + " " + cTime
-   ELSEIF aSelectedPanel[ _isAttrVisible ]
+   ELSEIF aSelectedPanel[ _lIsAttrVisible ]
       cSizeAttrDateTime := cPadLAttr
-   ELSEIF aSelectedPanel[ _isDateVisible ] .AND. aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cDate + " " + cTime
-   ELSEIF aSelectedPanel[ _isDateVisible ]
+   ELSEIF aSelectedPanel[ _lIsDateVisible ]
       cSizeAttrDateTime := cDate
-   ELSEIF aSelectedPanel[ _isTimeVisible ]
+   ELSEIF aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cTime
    ELSE
       cSizeAttrDateTime := " "
    ENDIF
 
    IF cName == ".."
-      cPadLSizeAttrDateTime := PadL( cSizeAttrDateTime, aSelectedPanel[ _maxCol ] - nBorder - nParentDir )
+      cPadLSizeAttrDateTime := PadL( cSizeAttrDateTime, aSelectedPanel[ _nMaxCol ] - nBorder - nParentDir )
       cFormattedLine := cLBracket + cName + cRBracket + cPadLSizeAttrDateTime
    ELSE
-      cPadLSizeAttrDateTime := PadL( cSizeAttrDateTime, aSelectedPanel[ _maxCol ] - nBorder - nLongestName )
-      nAvailableWidthForName := aSelectedPanel[ _maxCol ] - nBorder - Len( cPadLSizeAttrDateTime )
+      cPadLSizeAttrDateTime := PadL( cSizeAttrDateTime, aSelectedPanel[ _nMaxCol ] - nBorder - nLongestName )
+      nAvailableWidthForName := aSelectedPanel[ _nMaxCol ] - nBorder - Len( cPadLSizeAttrDateTime )
       cCutName := Left( cName, nAvailableWidthForName )
       cPadRName := PadR( cCutName, nAvailableWidthForName )
       cFormattedLine := cPadRName + cPadLSizeAttrDateTime
