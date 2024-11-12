@@ -106,7 +106,7 @@ PROCEDURE Main()
 
       nTimeEnd := C_time()
 
-      IF( lWaitMode .OR. c_difftime( nTimeEnd, nTimeBeg ) >= 10 )
+      IF( lWaitMode .OR. C_difftime( nTimeEnd, nTimeBeg ) >= 10 )
 
          sdl_setCursorVisible( pApp, .T. )
          pEvent := sdl_WaitEvent()
