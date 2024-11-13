@@ -339,7 +339,7 @@ PROCEDURE Main()
             hc_drawPanel( pApp, aActivePanel, aRightPanel )
             sdl_setBackground( pApp, WHITE )
          ELSE
-            sdl_setBackground( pApp, "000000" )
+            sdl_setBackground( pApp, BLACK )
          ENDIF
 
          hc_drawCmdLine( pApp, aActivePanel, lVisiblePanels )
@@ -675,15 +675,15 @@ STATIC PROCEDURE hc_drawCmdLine( pApp, aSelectedPanel, lVisiblePanels )
    cPadCmdLine := PadR( cCmdLine, nMaxCol )
 
    IF( lVisiblePanels )
-      sdl_drawFont( pApp, 0, nMaxRow - 1, aSelectedPanel[ _cCurrentDir ], "323232/13A10E" )
-      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ), nMaxRow - 1, cPromptEnd, "323232/0037DA" )
-      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ) + 2, nMaxRow - 1, cPadCmdLine, "323232/F9F1A5" )
+      sdl_drawFont( pApp, 0, nMaxRow - 1, aSelectedPanel[ _cCurrentDir ], BLACK + "/" + GREEN )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ), nMaxRow - 1, cPromptEnd, BLACK + "/" + CYAN )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ) + 2, nMaxRow - 1, cPadCmdLine, BLACK + "/" + YELLOW )
 
       sdl_setCursorPosition( pApp, aSelectedPanel[ _nCmdCol ] + Len( aSelectedPanel[ _cCurrentDir ] ) + 2, nMaxRow - 1 )
    ELSE
-      sdl_drawFont( pApp, 0, 0, aSelectedPanel[ _cCurrentDir ], "000000/13A10E" )
-      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ), 0, cPromptEnd, "000000/0037DA" )
-      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ) + 2, 0, cPadCmdLine, "000000/F9F1A5" )
+      sdl_drawFont( pApp, 0, 0, aSelectedPanel[ _cCurrentDir ], BLACK + "/" + GREEN )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ), 0, cPromptEnd, BLACK + "/" + CYAN )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ) + 2, 0, cPadCmdLine, BLACK + "/" + YELLOW )
 
       sdl_setCursorPosition( pApp, aSelectedPanel[ _nCmdCol ] + Len( aSelectedPanel[ _cCurrentDir ] ) + 2, 0 )
    ENDIF
