@@ -48,7 +48,7 @@
 #define _nMaxRow               4
 #define _cCurrentDir           5
 #define _aDirectory            6
-#define _nItemCount           7
+#define _nItemCount            7
 #define _nRowBar               8
 #define _nRowNo                9
 #define _cCmdLine             10
