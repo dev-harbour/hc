@@ -781,7 +781,7 @@ HB_FUNC( HC_RUNAPP )
    int result = system( command );
    if( result != 0 )
    {
-      fprintf( stderr, "Failed to run executable \n" );
+      fprintf( stderr, "Failed to run executable: %s\n", commandLine );
       hb_retl( F );
       return;
    }
@@ -820,13 +820,12 @@ HB_FUNC( HC_OPENFILE )
    }
 
    char command[ commandBufferSize ];
-
    snprintf( command, sizeof( command ), "xdg-open %s", commandLine );
 
    int result = system( command );
    if( result != 0 )
    {
-      fprintf( stderr, "Failed to open file \n" );
+      fprintf( stderr, "Failed to open file: %s\n", commandLine );
       hb_retl( F );
       return;
    }
