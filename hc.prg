@@ -322,7 +322,7 @@ STATIC FUNCTION hc_init()
    aPanel[ _nMaxRow           ] :=  0
    aPanel[ _cCurrentDir       ] :=  ""
    aPanel[ _aDirectory        ] :=  {}
-   aPanel[ _nItemCount       ] :=  0
+   aPanel[ _nItemCount        ] :=  0
    aPanel[ _nRowBar           ] :=  1
    aPanel[ _nRowNo            ] :=  0
    aPanel[ _cCmdLine          ] :=  ""
@@ -394,21 +394,26 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
    LOCAL cPaddedResult
    LOCAL cSelectedColor
 
+   // Rysowanie ramki dla aktywnego lub nieaktywnego panelu
    IF( aActivePanel == aSelectedPanel )
       sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_DOUBLE, "F1F1F1/323232" )
    ELSE
       sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_SINGLE, "F1F1F1/323232" )
    ENDIF
 
+   // Ustal najdłuższą nazwę, rozmiar i atrybut, by wyśrodkować elementy
    nLongestName := MAX( nLongestName, hc_findLongestName( aSelectedPanel ) )
    nLongestSize := hc_findLongestSize( aSelectedPanel )
    nLongestAttr := hc_findLongestAttr( aSelectedPanel )
 
+   // Przesuń indeks o bieżący numer wiersza
    i += aSelectedPanel[ _nRowNo ]
    FOR nRow := aSelectedPanel[ _nRow ] + 1 TO aSelectedPanel[ _nMaxRow ] - 2
 
+      // Sprawdzenie, czy indeks jest w granicach liczby elementów
       IF( i <= aSelectedPanel[ _nItemCount ] )
 
+         // Utwórz wyśrodkowany ciąg z informacjami o pliku lub katalogu
          cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
             aSelectedPanel[ _aDirectory ][ i ][ F_NAME ],;
             aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ],;
@@ -416,8 +421,10 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
             aSelectedPanel[ _aDirectory ][ i ][ F_TIME ],;
             aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
 
+         // Wyśrodkuj ciąg w kolumnie
          cPaddedResult := PadR( cPaddedString, aSelectedPanel[ _nMaxCol ] - 2 )
 
+         // Ustaw kolor dla aktywnego elementu, zależnie od jego stanu
          IF( aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ] )
 
             IF( !aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
@@ -427,9 +434,11 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
             ENDIF
 
          ELSE
+            // Ustaw kolor na podstawie atrybutów pliku
             cSelectedColor := hc_selectColor( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ], aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
          ENDIF
 
+         // Rysowanie tekstu z określonym kolorem w danym wierszu
          sdl_drawFont( pApp, aSelectedPanel[ _nCol ] + 1, nRow, cPaddedResult, cSelectedColor )
 
          ++i
