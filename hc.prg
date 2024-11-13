@@ -42,6 +42,23 @@
 #include "directry.ch"
 
 // ---
+#define BLACK         "0C0C0C"
+#define BLUE          "0037DA"
+#define GREEN         "13A10E"
+#define CYAN          "3A96DD"
+#define RED           "C50F1F"
+#define MAGENTA       "881798"
+#define BROWN         "C19C00"
+#define LIGHT_GRAY    "CCCCCC"
+#define GRAY          "767676"
+#define LIGHT_BLUE    "3B78FF"
+#define LIGHT_GREEN   "16C60C"
+#define LIGHT_CYAN    "61D6D6"
+#define LIGHT_RED     "E74856"
+#define LIGHT_MAGENTA "B4009E"
+#define YELLOW        "F9F1A5"
+#define WHITE         "F2F2F2"
+// ---
 #define _nCol                  1
 #define _nRow                  2
 #define _nMaxCol               3
@@ -89,7 +106,9 @@ PROCEDURE Main()
    LOCAL nIndex
    LOCAL cCommandLine
 
-   pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
+   LOCAL cKeyChar
+
+   pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", WHITE )
 
    sdl_LoadFont( pApp, "./font/9x18.pcf.gz", 18 )
 
@@ -276,7 +295,28 @@ PROCEDURE Main()
 
                   ENDSWITCH
 
+               CASE SDL_MOUSEWHEEL
+                  EXIT
+
+               CASE SDL_MOUSEMOTION
+                  EXIT
+
+               CASE SDL_MOUSEBUTTONDOWN
+                  EXIT
+
                OTHERWISE
+
+                  cKeyChar := sdl_keyChar( pEvent )
+                  IF( !cKeyChar == "" )
+
+                     aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ] + aActivePanel[ _nCmdColNo ] + 1, 0, sdl_keyChar( pEvent ) )
+                     IF aActivePanel[ _nCmdCol ] < nMaxCol - aActivePanel[ _nItemCount ]
+                        aActivePanel[ _nCmdCol ]++
+                     ELSE
+                        aActivePanel[ _nCmdColNo ]++
+                     ENDIF
+
+                  ENDIF
 
             ENDSWITCH
 
@@ -297,7 +337,7 @@ PROCEDURE Main()
 
             hc_drawPanel( pApp, aActivePanel, aLeftPanel )
             hc_drawPanel( pApp, aActivePanel, aRightPanel )
-            sdl_setBackground( pApp, "F1F1F1" )
+            sdl_setBackground( pApp, WHITE )
          ELSE
             sdl_setBackground( pApp, "000000" )
          ENDIF
@@ -620,27 +660,31 @@ STATIC PROCEDURE hc_drawCmdLine( pApp, aSelectedPanel, lVisiblePanels )
    LOCAL nMaxRow := sdl_MaxRow( pApp )
    LOCAL nMaxCol := sdl_MaxCol( pApp )
    LOCAL cPromptEnd
-   LOCAL cCmdDisplay
-   LOCAL cFullCmdLine
+   LOCAL cCmdLine, cPadCmdLine
 
-   // Ustawienie końcówki prompta w zależności od systemu operacyjnego
+   // Ustawienie końcówki ;)
    IF "Windows" $ os()
-      cPromptEnd := ">"
+      cPromptEnd := "> "
    ELSE
-      cPromptEnd := "$"
+      cPromptEnd := "$ "
    ENDIF
 
-   // Wyciągnięcie widocznej części polecenia do zmiennej cCmdDisplay
-   cCmdDisplay := SubStr( aSelectedPanel[ _cCmdLine ], 1 + aSelectedPanel[ _nCmdColNo ], nMaxCol + aSelectedPanel[ _nCmdColNo ] )
+   // Wyciągnięcie widocznej części polecenia do zmiennej cCmdLine
+   cCmdLine := SubStr( aSelectedPanel[ _cCmdLine ], aSelectedPanel[ _nCmdColNo ] + 1, nMaxCol - Len( aSelectedPanel[ _cCurrentDir ] ) - 3 )
 
-   // Pełnej linia poleceń z katalogiem, promptem i komendą
-   cFullCmdLine := PadR( aSelectedPanel[ _cCurrentDir ] + cPromptEnd + cCmdDisplay, nMaxCol )
+   cPadCmdLine := PadR( cCmdLine, nMaxCol )
 
    IF( lVisiblePanels )
-      sdl_drawFont( pApp, 0, nMaxRow - 1, cFullCmdLine, "323232/13a10e" )
+      sdl_drawFont( pApp, 0, nMaxRow - 1, aSelectedPanel[ _cCurrentDir ], "323232/13A10E" )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ), nMaxRow - 1, cPromptEnd, "323232/0037DA" )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ) + 2, nMaxRow - 1, cPadCmdLine, "323232/F9F1A5" )
+
       sdl_setCursorPosition( pApp, aSelectedPanel[ _nCmdCol ] + Len( aSelectedPanel[ _cCurrentDir ] ) + 2, nMaxRow - 1 )
    ELSE
-      sdl_drawFont( pApp, 0, 0, cFullCmdLine, "000000/13a10e" )
+      sdl_drawFont( pApp, 0, 0, aSelectedPanel[ _cCurrentDir ], "000000/13A10E" )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ), 0, cPromptEnd, "000000/0037DA" )
+      sdl_drawFont( pApp, Len( aSelectedPanel[ _cCurrentDir ] ) + 2, 0, cPadCmdLine, "000000/F9F1A5" )
+
       sdl_setCursorPosition( pApp, aSelectedPanel[ _nCmdCol ] + Len( aSelectedPanel[ _cCurrentDir ] ) + 2, 0 )
    ENDIF
 
