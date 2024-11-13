@@ -209,11 +209,13 @@ PROCEDURE Main()
                            ENDIF
 
                            IF( C_system( aActivePanel[ _cCmdLine ] ) == - 1 )
-                              C_perror( e"Error executing command\n" )
+                              C_perror( e"\nError executing command\n" )
                            ENDIF
 
                            aActivePanel[ _cCmdLine ] := ""
                            aActivePanel[ _nCmdCol ]  := 0
+
+                           hc_refreshPanels( pApp, aActivePanel, aLeftPanel, aRightPanel, lVisiblePanels )
 
                         ENDIF
                         EXIT
@@ -256,6 +258,31 @@ PROCEDURE Main()
                            IF aActivePanel[ _nCmdColNo ] + aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] )
                               aActivePanel[ _nCmdColNo ]++
                            ENDIF
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_HOME
+
+                        aActivePanel[ _nCmdCol ] := 0
+                        EXIT
+
+                     CASE SDLK_END
+
+                        aActivePanel[ _nCmdCol ] := Len( aActivePanel[ _cCmdLine ] )
+                        EXIT
+
+                     CASE SDLK_DELETE
+
+                        IF aActivePanel[ _nCmdCol ] >= 0
+                           aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ] + 1, 1, "" )
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_BACKSPACE
+
+                        IF aActivePanel[ _nCmdCol ] > 0
+                           aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ], 1, "" )
+                           aActivePanel[ _nCmdCol ]--
                         ENDIF
                         EXIT
 
@@ -435,6 +462,39 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
    ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
 
 RETURN aSelectedPanel
+
+/* -------------------------------------------------------------------------
+hc_refreshPanels( pApp, aSelectedPanel, aLeftPanel, aRightPanel, lVisiblePanels ) --> NIL
+------------------------------------------------------------------------- */
+STATIC PROCEDURE hc_refreshPanels( pApp, aSelectedPanel, aLeftPanel, aRightPanel, lVisiblePanels )
+
+   // Sprawdź, czy oba panele są w tym samym katalogu
+   IF aLeftPanel[ _cCurrentDir ] == aRightPanel[ _cCurrentDir ]
+
+      aLeftPanel := hc_fetchList( aLeftPanel, aLeftPanel[ _cCurrentDir ] )
+      aRightPanel := hc_fetchList( aRightPanel, aRightPanel[ _cCurrentDir ] )
+
+      IF( lVisiblePanels )
+         sdl_BeginDraw( pApp )
+            hc_drawPanel( pApp, aSelectedPanel, aLeftPanel )
+            hc_drawPanel( pApp, aSelectedPanel, aRightPanel )
+         sdl_EndDraw( pApp )
+      ENDIF
+
+   ELSE
+
+      // Odśwież tylko wybrany panel
+      aSelectedPanel := hc_fetchList( aSelectedPanel, aSelectedPanel[ _cCurrentDir ] )
+
+      IF( lVisiblePanels )
+         sdl_BeginDraw( pApp )
+            hc_drawPanel( pApp, aSelectedPanel, aSelectedPanel )
+         sdl_EndDraw( pApp )
+      ENDIF
+
+   ENDIF
+
+RETURN
 
 /* -------------------------------------------------------------------------
 hc_resize( aSelectedPanel, nCol, nRow, nMaxCol, nMaxRow ) --> aSelectedPanel
