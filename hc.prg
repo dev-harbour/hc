@@ -530,9 +530,9 @@ STATIC FUNCTION hc_findLongestAttr( aSelectedPanel )
 RETURN nLongestAttr
 
 /* -------------------------------------------------------------------------
-hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr, cName, cSize, dDate, cTime, cAttr ) --> cFormattedLine
+hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr, cName, nSize, dDate, cTime, cAttr ) --> cFormattedLine
 ------------------------------------------------------------------------- */
-STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr, cName, cSize, dDate, cTime, cAttr )
+STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr, cName, nSize, dDate, cTime, cAttr )
 
    LOCAL nLengthSize
    LOCAL nLengthAttr
@@ -553,7 +553,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
 
    // Wyrównanie
    cPadLAttr := PadL( cAttr, nLengthAttr )
-   cPadLSize := PadL( cSize, nLengthSize )
+   cPadLSize := PadL( nSize, nLengthSize )
 
    IF( aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ] )
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cDate + " " + cTime
