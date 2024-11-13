@@ -87,6 +87,7 @@ PROCEDURE Main()
    LOCAL lVisiblePanels := .T.
 
    LOCAL nIndex
+   LOCAL cCommandLine
 
    pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
 
@@ -166,16 +167,16 @@ PROCEDURE Main()
 
                            nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
                            IF( At( "D", aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
-                              OutStd( e"\n 1 " )
-                              //char *commandLine = gt_addStr( "\"", aPanel->currentDir, aPanel->files[ index ].name, "\"", NULL );
-                              //if( gt_isExecutable( commandLine ) )
-                              //{
-                              //   gt_runApp( commandLine );
-                              //}
-                              //else
-                              //{
-                              //   gt_run( commandLine );
-                              //}
+
+                              cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
+                              IF( hc_isExecutable( cCommandLine ) )
+                                 hc_runApp( cCommandLine )
+                                 OutStd( e"\nhc_runApp", cCommandLine )
+                              ELSE
+                                 hc_openFile( cCommandLine )
+                                 OutStd( e"\nhc_openFile", cCommandLine )
+                              ENDIF
+
                            ELSE
                               aActivePanel := hc_changeDir( aActivePanel )
                            ENDIF
@@ -269,7 +270,7 @@ PROCEDURE Main()
                      OTHERWISE
 
                         IF( sdl_EventKeyKeysymSym( pEvent ) == SDLK_o .AND. hb_BitAnd( sdl_GetModState(), KMOD_LCTRL ) != 0 )
-                           lVisiblePanels := hc_togglePanels( lVisiblePanels )
+                           lVisiblePanels := hc_isTogglePanels( lVisiblePanels )
                         ENDIF
                         EXIT
 
@@ -658,6 +659,12 @@ Harbour C Code
 
 #include <hbapi.h>
 
+#if defined( _WIN32 ) || defined( _WIN64 )
+#define PATH_MAX          260  /* Windows standard path limit */
+#else
+#define PATH_MAX         4096  /* Chars in a path name including nul */
+#endif
+
 typedef enum _bool bool;
 enum _bool
 {
@@ -665,12 +672,171 @@ enum _bool
    T = ( ! 0 )
 };
 
-HB_FUNC( HC_TOGGLEPANELS )
+// bool hc_isTogglePanels( bool visiblePanels )
+HB_FUNC( HC_ISTOGGLEPANELS )
 {
    bool visiblePanels = hb_parl( 1 );
    visiblePanels = !visiblePanels;
    hb_retl( visiblePanels );
 }
 
+// bool hc_isExecutable( const char *commandLine )
+HB_FUNC( HC_ISEXECUTABLE )
+{
+   const char *commandLine = hb_parc( 1 );
+
+#if defined( _WIN32 ) || defined( _WIN64 )
+
+   const char *extensions[] = { ".exe", ".bat", ".com", ".cmd" };
+   const char *ext = strrchr( commandLine, '.' ); // Znajdź ostatnie wystąpienie '.'
+
+   if( ext )
+   {
+      for( size_t i = 0; i < sizeof( extensions ) / sizeof( extensions[ 0 ] ); i++ )
+      {
+         if( strcmp( ext, extensions[ i ] ) == 0 )
+         {
+            hb_retl( T );
+            return;
+         }
+      }
+   }
+   hb_retl( F );
+   return;
+
+#else
+   const int commandBufferSize = PATH_MAX;
+   const int commandPrefixMaxSize = 10;
+
+   if( strlen( commandLine ) > ( commandBufferSize - commandPrefixMaxSize - 1 ) )
+   {
+      fprintf( stderr, "Command is too long\n" );
+      hb_retl( F );
+      return;
+   }
+
+   char command[ commandBufferSize + 50 ];
+   snprintf( command, sizeof( command ), "file --mime-type -b %s", commandLine );
+
+   FILE *fp = popen( command, "r" );
+   if( fp == NULL )
+   {
+      perror( "popen" );
+      hb_retl( F );
+      return;
+   }
+
+   char mimeType[ 100 ];
+   if( fgets( mimeType, sizeof( mimeType ), fp ) )
+   {
+      mimeType[ strcspn( mimeType, "\n" ) ] = 0;  // Usuń znak nowej linii z `fgets`
+
+      if( strcmp( mimeType, "application/x-executable" ) == 0 || strcmp( mimeType, "application/x-pie-executable" ) == 0 )
+      {
+         pclose( fp );
+         hb_retl( T );
+         return;
+      }
+   }
+
+   pclose( fp );
+   hb_retl( F );
+   return;
+
+#endif
+}
+
+// bool hc_runApp( const char *commandLine )
+HB_FUNC( HC_RUNAPP )
+{
+   const char *commandLine = hb_parc( 1 );
+
+#if defined( _WIN32 ) || defined( _WIN64 )
+   char commandWithQuotes[ PATH_MAX ];
+   snprintf( commandWithQuotes, sizeof( commandWithQuotes ), "\"%s\"", commandLine );
+
+   HINSTANCE result = ShellExecute( NULL, "open", commandWithQuotes, NULL, NULL, SW_SHOWNORMAL );
+   if( ( uintptr_t ) result <= 32 )
+   {
+      fprintf( stderr, "Failed to run application: %s\n", commandLine );
+      hb_retl( F );
+      return;
+   }
+   hb_retl( T );
+   return;
+#else
+   const int commandBufferSize = PATH_MAX;
+   const int commandPrefixMaxSize = 10;
+
+   if( strlen( commandLine ) > ( commandBufferSize - commandPrefixMaxSize - 1 ) )
+   {
+      fprintf( stderr, "Command is too long\n" );
+      hb_retl( F );
+      return;
+   }
+
+   char command[ commandBufferSize ];
+   snprintf( command, sizeof( command ), "%s &", commandLine );
+
+   int result = system( command );
+   if( result != 0 )
+   {
+      fprintf( stderr, "Failed to run executable \n" );
+      hb_retl( F );
+      return;
+   }
+   hb_retl( T );
+   return;
+#endif
+}
+
+// bool hc_openFile( const char *commandLine )
+HB_FUNC( HC_OPENFILE )
+{
+   const char *commandLine = hb_parc( 1 );
+
+#if defined( _WIN32 ) || defined( _WIN64 )
+   char commandWithQuotes[ PATH_MAX ];
+   snprintf( commandWithQuotes, sizeof( commandWithQuotes ), "\"%s\"", commandLine );
+
+   HINSTANCE result = ShellExecute( NULL, "open", commandWithQuotes, NULL, NULL, SW_SHOWNORMAL );
+   if( ( uintptr_t ) result <= 32 )
+   {
+      fprintf( stderr, "Failed to open file: %s\n", commandLine );
+      hb_retl( F );
+      return;
+   }
+   hb_retl( T );
+   return;
+#else
+   const int commandBufferSize = PATH_MAX;
+   const int commandPrefixMaxSize = 10;
+
+   if( strlen( commandLine ) > ( commandBufferSize - commandPrefixMaxSize - 1 ) )
+   {
+      fprintf( stderr, "Command is too long\n" );
+      hb_retl( F );
+      return;
+   }
+
+   char command[ commandBufferSize ];
+
+   snprintf( command, sizeof( command ), "xdg-open %s", commandLine );
+
+   int result = system( command );
+   if( result != 0 )
+   {
+      fprintf( stderr, "Failed to open file \n" );
+      hb_retl( F );
+      return;
+   }
+   hb_retl( T );
+   return;
+#endif
+}
+
 #pragma ENDDUMP
+/* *************************************************************************
+End Harbour C Code
+************************************************************************* */
 
