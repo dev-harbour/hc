@@ -171,10 +171,8 @@ PROCEDURE Main()
                               cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
                               IF( hc_isExecutable( cCommandLine ) )
                                  hc_runApp( cCommandLine )
-                                 OutStd( e"\nhc_runApp", cCommandLine )
                               ELSE
                                  hc_openFile( cCommandLine )
-                                 OutStd( e"\nhc_openFile", cCommandLine )
                               ENDIF
 
                            ELSE
