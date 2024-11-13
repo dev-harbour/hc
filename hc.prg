@@ -297,6 +297,8 @@ PROCEDURE Main()
             sdl_setBackground( pApp, "000000" )
          ENDIF
 
+         hc_drawCmdLine( pApp, aActivePanel, lVisiblePanels )
+
       sdl_EndDraw( pApp )
 
       HB_SYMBOL_UNUSED( nMaxCol )
@@ -599,6 +601,37 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    ENDIF
 
 RETURN cFormattedLine
+
+STATIC PROCEDURE hc_drawCmdLine( pApp, aSelectedPanel, lVisiblePanels )
+
+   LOCAL nMaxRow := sdl_MaxRow( pApp )
+   LOCAL nMaxCol := sdl_MaxCol( pApp )
+   LOCAL cPromptEnd
+   LOCAL cCmdDisplay
+
+   // Ustawienie końcówki prompta w zależności od systemu operacyjnego
+   IF "Windows" $ os()
+      cPromptEnd := ">"
+   ELSE
+      cPromptEnd := "$"
+   ENDIF
+
+   // Wyciągnięcie widocznej części polecenia do zmiennej cCmdDisplay
+   cCmdDisplay := SubStr( aSelectedPanel[ _cCmdLine ], 1 + aSelectedPanel[ _nCmdColNo ], nMaxCol + aSelectedPanel[ _nCmdColNo ] )
+
+   IF( lVisiblePanels )
+      sdl_drawFont( pApp, 0, nMaxRow - 1,;
+         PadR( aSelectedPanel[ _cCurrentDir ] + cPromptEnd + cCmdDisplay, nMaxCol ), "323232/13a10e" )
+
+      sdl_setCursorPosition( pApp, aSelectedPanel[ _nCmdCol ] + Len( aSelectedPanel[ _cCurrentDir ] ) + 2, nMaxRow - 1 )
+   ELSE
+      sdl_drawFont( pApp, 0, 0,;
+         PadR( aSelectedPanel[ _cCurrentDir ] + cPromptEnd + cCmdDisplay, nMaxCol ), "000000/13a10e" )
+
+      sdl_setCursorPosition( pApp, aSelectedPanel[ _nCmdCol ] + Len( aSelectedPanel[ _cCurrentDir ] ) + 2, 0 )
+   ENDIF
+
+RETURN
 
 /* -------------------------------------------------------------------------
 hc_changeDir( aSelectedPanel ) --> aSelectedPanel
