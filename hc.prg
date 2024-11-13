@@ -183,18 +183,16 @@ PROCEDURE Main()
 
                         ELSE
 
-                           //if( gt_changeDir( aPanel->currentDir ) != 0 )
-                           //{
-                           //   perror( "Error changing directory" );
-                           //}
-                           //int result = system( aPanel->cmdLine );
-                           //if( result != 0 )
-                           //{
-                           //   printf( "Error executing command\n" );
-                           //}
-                           //gt_setBlankString( &aPanel->cmdLine );
-                           //aPanel->cmdCol = 0;
-                           //hc_refreshPanel( gt, aPanel );
+                           IF( hc_chDir( aActivePanel[ _cCurrentDir ] ) == .F. )
+                              C_perror( e"\nError changing directory\n" )
+                           ENDIF
+
+                           IF( C_system( aActivePanel[ _cCmdLine ] ) == - 1 )
+                              C_perror( e"Error executing command\n" )
+                           ENDIF
+
+                           aActivePanel[ _cCmdLine ] := ""
+                           aActivePanel[ _nCmdCol ]  := 0
                         ENDIF
                         EXIT
 
@@ -660,8 +658,13 @@ Harbour C Code
 #include <hbapi.h>
 
 #if defined( _WIN32 ) || defined( _WIN64 )
+#include <direct.h>
+#include <windows.h>
 #define PATH_MAX          260  /* Windows standard path limit */
 #else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #define PATH_MAX         4096  /* Chars in a path name including nul */
 #endif
 
@@ -832,6 +835,38 @@ HB_FUNC( HC_OPENFILE )
    hb_retl( T );
    return;
 #endif
+}
+
+// bool hc_chDir( const char *path )
+HB_FUNC( HC_CHDIR )
+{
+   const char *path = hb_parc( 1 );
+
+   if( path == NULL )
+   {
+      fprintf( stderr, "Error: Path is NULL.\n" );
+      hb_retl( F );
+      return;
+   }
+
+#if defined( _WIN32 ) || defined( _WIN64 )
+   if( !SetCurrentDirectory( path ) )
+   {
+      fprintf( stderr, "Error: Could not change directory to '%s'.\n", path );
+      hb_retl( F );
+      return;
+   }
+#else
+   if( chdir( path ) != 0 )
+   {
+      perror( "Error changing directory" );
+      hb_retl( F );
+      return;
+   }
+#endif
+
+   hb_retl( T );  // Zwracamy T, jeśli zmiana katalogu się powiodła
+   return;
 }
 
 #pragma ENDDUMP
