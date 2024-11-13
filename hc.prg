@@ -86,6 +86,8 @@ PROCEDURE Main()
 
    LOCAL lVisiblePanels := .T.
 
+   LOCAL nIndex
+
    pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", "F1F1F1" )
 
    sdl_LoadFont( pApp, "./font/9x18.pcf.gz", 18 )
@@ -158,6 +160,43 @@ PROCEDURE Main()
                         lQuit := .T.
                         EXIT
 
+                     CASE SDLK_RETURN
+
+                        IF( aActivePanel[ _cCmdLine ] == "" )
+
+                           nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
+                           IF( At( "D", aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
+                              OutStd( e"\n 1 " )
+                              //char *commandLine = gt_addStr( "\"", aPanel->currentDir, aPanel->files[ index ].name, "\"", NULL );
+                              //if( gt_isExecutable( commandLine ) )
+                              //{
+                              //   gt_runApp( commandLine );
+                              //}
+                              //else
+                              //{
+                              //   gt_run( commandLine );
+                              //}
+                           ELSE
+                              aActivePanel := hc_changeDir( aActivePanel )
+                           ENDIF
+
+                        ELSE
+
+                           //if( gt_changeDir( aPanel->currentDir ) != 0 )
+                           //{
+                           //   perror( "Error changing directory" );
+                           //}
+                           //int result = system( aPanel->cmdLine );
+                           //if( result != 0 )
+                           //{
+                           //   printf( "Error executing command\n" );
+                           //}
+                           //gt_setBlankString( &aPanel->cmdLine );
+                           //aPanel->cmdCol = 0;
+                           //hc_refreshPanel( gt, aPanel );
+                        ENDIF
+                        EXIT
+
                      CASE SDLK_TAB
 
                         IF( lVisiblePanels )
@@ -180,7 +219,7 @@ PROCEDURE Main()
                      CASE SDLK_DOWN
 
                         IF( lVisiblePanels )
-                           IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 1 .AND. aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
+                           IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 2 .AND. aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
                               ++aActivePanel[ _nRowBar ]
                            ELSE
                               IF( aActivePanel[ _nRowNo ] + aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
@@ -367,7 +406,7 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
    nLongestAttr := hc_findLongestAttr( aSelectedPanel )
 
    i += aSelectedPanel[ _nRowNo ]
-   FOR nRow := aSelectedPanel[ _nRow ] + 1 TO aSelectedPanel[ _nMaxRow ] - 1
+   FOR nRow := aSelectedPanel[ _nRow ] + 1 TO aSelectedPanel[ _nMaxRow ] - 2
 
       IF( i <= aSelectedPanel[ _nItemCount ] )
 
@@ -554,6 +593,63 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    ENDIF
 
 RETURN cFormattedLine
+
+/* -------------------------------------------------------------------------
+hc_changeDir( aSelectedPanel ) --> aSelectedPanel
+------------------------------------------------------------------------- */
+STATIC FUNCTION hc_changeDir( aSelectedPanel )
+
+   LOCAL nIndex, cDir, cDir0
+   LOCAL nParentDirPosition
+
+   // Ustal indeks bieżącego katalogu lub pliku
+   nIndex := aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
+
+   // Sprawdzamy, czy element jest katalogiem (czy zawiera atrybut "D")
+   IF At( "D", aSelectedPanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0
+      RETURN aSelectedPanel
+   ENDIF
+
+   // Jeśli element to katalog "..", przechodzimy do katalogu nadrzędnego
+   IF aSelectedPanel[ _aDirectory ][ nIndex ][ F_NAME ] == ".."
+      // Pełna ścieżka do bieżącego katalogu
+      cDir := aSelectedPanel[ _cCurrentDir ]
+
+      // Jeśli jesteśmy już w katalogu głównym, nie zmieniamy katalogu
+      IF cDir == hb_ps()
+         RETURN aSelectedPanel
+      ENDIF
+
+      // Nazwa katalogu nadrzędnego wyodrębniona z cDir
+      cDir0 := SubStr( cDir, RAt( hb_ps(), Left( cDir, Len( cDir ) - 1 ) ) + 1 )
+      cDir0 := SubStr( cDir0, 1, Len( cDir0 ) - 1 )
+      // Zaktualizowana ścieżka do nadrzędnego katalogu
+      cDir  := Left( cDir, RAt( hb_ps(), Left( cDir, Len( cDir ) - 1 ) ) )
+
+      // Aktualizujemy listę katalogów i plików
+      aSelectedPanel := hc_fetchList( aSelectedPanel, cDir )
+
+      // Znajdujemy pozycję nadrzędnego katalogu w tablicy
+      nParentDirPosition := Max( AScan( aSelectedPanel[ _aDirectory ], { | x | x[ F_NAME ] == cDir0 } ), 1 )
+
+      // Ustawienie pozycji w widoku panelu
+      IF nParentDirPosition > aSelectedPanel[ _nMaxRow ] - 1
+         aSelectedPanel[ _nRowNo ]  := nParentDirPosition % ( aSelectedPanel[ _nMaxRow ] - 1 )
+         aSelectedPanel[ _nRowBar ] := aSelectedPanel[ _nMaxRow ] - 1
+      ELSE
+         aSelectedPanel[ _nRowNo ]  := 0
+         aSelectedPanel[ _nRowBar ] := nParentDirPosition
+      ENDIF
+
+   ELSE
+      // Przechodzimy do wybranego katalogu
+      cDir := aSelectedPanel[ _cCurrentDir ] + aSelectedPanel[ _aDirectory ][ nIndex ][ F_NAME ] + hb_ps()
+      aSelectedPanel[ _nRowBar ] := 1
+      aSelectedPanel[ _nRowNo ]  := 0
+      aSelectedPanel := hc_fetchList( aSelectedPanel, cDir )
+   ENDIF
+
+RETURN aSelectedPanel
 
 /* *************************************************************************
 Harbour C Code
