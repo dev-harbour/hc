@@ -109,17 +109,20 @@ PROCEDURE Main()
 
    aActivePanel := aLeftPanel
 
+   // Zwraca bieżący czas w sekundach jako liczbę całkowitą
    nTimeBeg := C_time()
 
    DO WHILE( !lQuit )
 
       nTimeEnd := C_time()
 
+      // Oblicza różnicę w sekundach między nTimeEnd a nTimeBeg
       IF( lWaitMode .OR. C_difftime( nTimeEnd, nTimeBeg ) >= 10 )
 
          sdl_setCursorVisible( pApp, .T. )
          pEvent := sdl_WaitEvent()
          IF( pEvent != NIL )
+            // Aktualizacja czasu przy nowym zdarzeniu
             nTimeBeg := C_time()
             lWaitMode := .F.
          ENDIF
@@ -128,6 +131,7 @@ PROCEDURE Main()
 
          DO WHILE( ( pEvent := sdl_PollEvent() ) != NIL )
 
+            // Aktualizacja czasu przy każdym zdarzeniu
             nTimeBeg := C_time()
 
             SWITCH( sdl_EventType( pEvent ) )
@@ -278,6 +282,7 @@ PROCEDURE Main()
 
          ENDDO
 
+         /* Jeśli różnica czasu przekroczy 10 sekund, przełącza na tryb oczekiwania */
          IF( C_difftime( nTimeEnd, nTimeBeg ) >= 10 )
             lWaitMode := .T.
          ENDIF
@@ -551,10 +556,17 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    IIF( aSelectedPanel[ _lIsAttrVisible ], nLengthAttr := nLongestAttr, nLengthAttr := 0 )
    IIF( aSelectedPanel[ _lIsSizeVisible ], nLengthSize := nLongestSize, nLengthSize := 0 )
 
-   // Wyrównanie
+   // Wyrównanie atrybutów
    cPadLAttr := PadL( cAttr, nLengthAttr )
-   cPadLSize := PadL( nSize, nLengthSize )
 
+   // Ustawienie "DIR" jako rozmiaru dla katalogów, inaczej wyświetlenie faktycznego rozmiaru
+   IF "D" $ cAttr
+      cPadLSize := PadL( "DIR", nLengthSize )
+   ELSE
+      cPadLSize := PadL( nSize, nLengthSize )
+   ENDIF
+
+   // Formatuj ciąg w zależności od widocznych elementów
    IF( aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ] )
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr + " " + cDate + " " + cTime
    ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsAttrVisible ] .AND. aSelectedPanel[ _lIsDateVisible ]
@@ -565,7 +577,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
       cSizeAttrDateTime := cPadLSize + " " + cPadLAttr
    ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsDateVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cDate + " " + cTime
-   ELSEIF aSelectedPanel[ _lIsSizeVisible  ] .AND. aSelectedPanel[ _lIsDateVisible ]
+   ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsDateVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cDate
    ELSEIF aSelectedPanel[ _lIsSizeVisible ] .AND. aSelectedPanel[ _lIsTimeVisible ]
       cSizeAttrDateTime := cPadLSize + " " + cTime
@@ -589,6 +601,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
       cSizeAttrDateTime := " "
    ENDIF
 
+   // Formatowanie wyjściowe zależnie od nazwy katalogu ".." lub zwykłych nazw
    IF( cName == ".." )
       cPadLSizeAttrDateTime := PadL( cSizeAttrDateTime, aSelectedPanel[ _nMaxCol ] - nBorder - nParentDir )
       cFormattedLine := cLBracket + cName + cRBracket + cPadLSizeAttrDateTime
