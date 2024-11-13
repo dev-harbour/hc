@@ -28,36 +28,36 @@
  *
  */
 
-/* Keeping it tidy */
+// Keeping it tidy
 #pragma -w3
 #pragma -es2
 
-/* Optimizations */
+// Optimizations
 #pragma -km+
 #pragma -ko+
 
 #include "hbsdl.ch"
 
-/* Harbour */
+// Harbour
 #include "directry.ch"
 
 // ---
-#define BLACK         "0C0C0C"
-#define BLUE          "0037DA"
-#define GREEN         "13A10E"
-#define CYAN          "3A96DD"
-#define RED           "C50F1F"
-#define MAGENTA       "881798"
-#define BROWN         "C19C00"
-#define LIGHT_GRAY    "CCCCCC"
-#define GRAY          "767676"
-#define LIGHT_BLUE    "3B78FF"
-#define LIGHT_GREEN   "16C60C"
-#define LIGHT_CYAN    "61D6D6"
-#define LIGHT_RED     "E74856"
-#define LIGHT_MAGENTA "B4009E"
-#define YELLOW        "F9F1A5"
-#define WHITE         "F2F2F2"
+#define BLACK            "0C0C0C"
+#define BLUE             "0037DA"
+#define GREEN            "13A10E"
+#define CYAN             "3A96DD"
+#define RED              "C50F1F"
+#define MAGENTA          "881798"
+#define BROWN            "C19C00"
+#define LIGHT_GRAY       "CCCCCC"
+#define GRAY             "767676"
+#define LIGHT_BLUE       "3B78FF"
+#define LIGHT_GREEN      "16C60C"
+#define LIGHT_CYAN       "61D6D6"
+#define LIGHT_RED        "E74856"
+#define LIGHT_MAGENTA    "B4009E"
+#define YELLOW           "F9F1A5"
+#define WHITE            "F2F2F2"
 // ---
 #define _nCol                  1
 #define _nRow                  2
@@ -214,6 +214,7 @@ PROCEDURE Main()
 
                            aActivePanel[ _cCmdLine ] := ""
                            aActivePanel[ _nCmdCol ]  := 0
+
                         ENDIF
                         EXIT
 
@@ -232,6 +233,28 @@ PROCEDURE Main()
                               aActivePanel[ _nCmdCol  ] := aRightPanel[ _nCmdCol ]
                               aRightPanel[  _cCmdLine ] := ""
                               aRightPanel[  _nCmdCol  ] := 0
+                           ENDIF
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_LEFT
+
+                        IF aActivePanel[ _nCmdCol ] > 0
+                           aActivePanel[ _nCmdCol ]--
+                        ELSE
+                           IF aActivePanel[ _nCmdColNo ] >= 1
+                              aActivePanel[ _nCmdColNo ]--
+                           ENDIF
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_RIGHT
+
+                        IF aActivePanel[ _nCmdCol ] < nMaxCol - Len( aActivePanel[ _cCurrentDir ] ) .AND. aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] )
+                           aActivePanel[ _nCmdCol ]++
+                        ELSE
+                           IF aActivePanel[ _nCmdColNo ] + aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] )
+                              aActivePanel[ _nCmdColNo ]++
                            ENDIF
                         ENDIF
                         EXIT
