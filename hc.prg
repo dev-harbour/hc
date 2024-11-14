@@ -1078,8 +1078,11 @@ HB_FUNC( HC_EXECUTEANDCAPTURE )
       return;
    }
 
+   char commandWithErrorCapture[ PATH_MAX ];
+   snprintf( commandWithErrorCapture, sizeof( commandWithErrorCapture ), "%s 2>&1", command );
+
    // Otwórz proces i przechwyć wynik
-   FILE *fp = popen( command, "r" );
+   FILE *fp = popen( commandWithErrorCapture, "r" );
    if( fp == NULL )
    {
       fprintf( stderr, "Failed to run command: %s\n", command );
@@ -1101,16 +1104,17 @@ HB_FUNC( HC_EXECUTEANDCAPTURE )
    {
       // Rezerwacja większej pamięci na wynik
       size_t lineLength = strlen( result );
-      fullOutput = hb_xrealloc( fullOutput, totalLength + lineLength + 1 );
-      if( fullOutput == NULL )
+      char *newOutput = hb_xrealloc( fullOutput, totalLength + lineLength + 1 );
+      if( newOutput == NULL )
       {
          fprintf( stderr, "Memory allocation error.\n" );
+         hb_xfree( fullOutput );
          pclose( fp );
          hb_retc( "" );
          return;
       }
 
-      // Dodaj bieżącą linię do pełnego wyniku
+      fullOutput = newOutput;
       strcat( fullOutput, result );
       totalLength += lineLength;
    }
