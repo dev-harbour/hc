@@ -191,10 +191,12 @@ PROCEDURE Main()
                         IF( aActivePanel[ _cCmdLine ] == "" )
 
                            IF( lVisiblePanels )
+                              // Określ indeks w panelu i sprawdź, czy wybrany element to katalog
                               nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
                               IF( At( "D", aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
-
+                                 // Przygotowanie pełnej ścieżki dla wybranego elementu
                                  cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
+                                 // Sprawdzenie, czy element jest wykonywalnym plikiem
                                  IF( hc_isExecutable( cCommandLine ) )
                                     hc_runApp( cCommandLine )
                                  ELSE
@@ -202,16 +204,19 @@ PROCEDURE Main()
                                  ENDIF
 
                               ELSE
+                                 // Zmiana katalogu, jeśli wybrano katalog
                                  aActivePanel := hc_changeDir( aActivePanel )
                               ENDIF
                            ENDIF
 
                         ELSE
 
+                           // Zmiana katalogu w przypadku błędu
                            IF( hc_chDir( aActivePanel[ _cCurrentDir ] ) == .F. )
                               C_perror( e"\nError changing directory\n" )
                            ENDIF
 
+                           // Uruchomienie polecenia i przechwycenie jego wyniku
                            IF( C_system( aActivePanel[ _cCmdLine ] ) == - 1 )
                               C_perror( e"\nError executing command\n" )
                            ELSE
@@ -247,10 +252,10 @@ PROCEDURE Main()
 
                      CASE SDLK_LEFT
 
-                        IF aActivePanel[ _nCmdCol ] > 0
+                        IF( aActivePanel[ _nCmdCol ] > 0 )
                            aActivePanel[ _nCmdCol ]--
                         ELSE
-                           IF aActivePanel[ _nCmdColNo ] >= 1
+                           IF( aActivePanel[ _nCmdColNo ] >= 1 )
                               aActivePanel[ _nCmdColNo ]--
                            ENDIF
                         ENDIF
@@ -258,10 +263,10 @@ PROCEDURE Main()
 
                      CASE SDLK_RIGHT
 
-                        IF aActivePanel[ _nCmdCol ] < nMaxCol - Len( aActivePanel[ _cCurrentDir ] ) .AND. aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] )
+                        IF( aActivePanel[ _nCmdCol ] < nMaxCol - Len( aActivePanel[ _cCurrentDir ] ) .AND. aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] ) )
                            aActivePanel[ _nCmdCol ]++
                         ELSE
-                           IF aActivePanel[ _nCmdColNo ] + aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] )
+                           IF( aActivePanel[ _nCmdColNo ] + aActivePanel[ _nCmdCol ] < Len( aActivePanel[ _cCmdLine ] ) )
                               aActivePanel[ _nCmdColNo ]++
                            ENDIF
                         ENDIF
@@ -279,14 +284,14 @@ PROCEDURE Main()
 
                      CASE SDLK_DELETE
 
-                        IF aActivePanel[ _nCmdCol ] >= 0
+                        IF( aActivePanel[ _nCmdCol ] >= 0 )
                            aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ] + 1, 1, "" )
                         ENDIF
                         EXIT
 
                      CASE SDLK_BACKSPACE
 
-                        IF aActivePanel[ _nCmdCol ] > 0
+                        IF( aActivePanel[ _nCmdCol ] > 0 )
                            aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ], 1, "" )
                            aActivePanel[ _nCmdCol ]--
                         ENDIF
@@ -366,7 +371,7 @@ PROCEDURE Main()
                   IF( !cKeyChar == "" )
 
                      aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ] + aActivePanel[ _nCmdColNo ] + 1, 0, sdl_keyChar( pEvent ) )
-                     IF aActivePanel[ _nCmdCol ] < nMaxCol - aActivePanel[ _nItemCount ]
+                     IF( aActivePanel[ _nCmdCol ] < nMaxCol - aActivePanel[ _nItemCount ] )
                         aActivePanel[ _nCmdCol ]++
                      ELSE
                         aActivePanel[ _nCmdColNo ]++
@@ -481,7 +486,7 @@ hc_refreshPanels( pApp, aSelectedPanel, aLeftPanel, aRightPanel, lVisiblePanels 
 STATIC PROCEDURE hc_refreshPanels( pApp, aSelectedPanel, aLeftPanel, aRightPanel, lVisiblePanels )
 
    // Sprawdź, czy oba panele są w tym samym katalogu
-   IF aLeftPanel[ _cCurrentDir ] == aRightPanel[ _cCurrentDir ]
+   IF( aLeftPanel[ _cCurrentDir ] == aRightPanel[ _cCurrentDir ] )
 
       aLeftPanel := hc_fetchList( aLeftPanel, aLeftPanel[ _cCurrentDir ] )
       aRightPanel := hc_fetchList( aRightPanel, aRightPanel[ _cCurrentDir ] )
@@ -695,7 +700,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    cPadLAttr := PadL( cAttr, nLengthAttr )
 
    // Ustawienie "DIR" jako rozmiaru dla katalogów, inaczej wyświetlenie faktycznego rozmiaru
-   IF "D" $ cAttr
+   IF( "D" $ cAttr )
       cPadLSize := PadL( "DIR", nLengthSize )
    ELSE
       cPadLSize := PadL( nSize, nLengthSize )
@@ -758,7 +763,7 @@ STATIC PROCEDURE hc_drawCmdLine( pApp, aSelectedPanel, lVisiblePanels )
    LOCAL cCmdLine, cPadCmdLine
 
    // Ustawienie końcówki ;)
-   IF "Windows" $ os()
+   IF( "Windows" $ os() )
       cPromptEnd := "> "
    ELSE
       cPromptEnd := "$ "
@@ -797,17 +802,17 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
    nIndex := aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
 
    // Sprawdzamy, czy element jest katalogiem (czy zawiera atrybut "D")
-   IF At( "D", aSelectedPanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0
+   IF( At( "D", aSelectedPanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
       RETURN aSelectedPanel
    ENDIF
 
    // Jeśli element to katalog "..", przechodzimy do katalogu nadrzędnego
-   IF aSelectedPanel[ _aDirectory ][ nIndex ][ F_NAME ] == ".."
+   IF( aSelectedPanel[ _aDirectory ][ nIndex ][ F_NAME ] == ".." )
       // Pełna ścieżka do bieżącego katalogu
       cDir := aSelectedPanel[ _cCurrentDir ]
 
       // Jeśli jesteśmy już w katalogu głównym, nie zmieniamy katalogu
-      IF cDir == hb_ps()
+      IF( cDir == hb_ps() )
          RETURN aSelectedPanel
       ENDIF
 
@@ -824,7 +829,7 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
       nParentDirPosition := Max( AScan( aSelectedPanel[ _aDirectory ], { | x | x[ F_NAME ] == cDir0 } ), 1 )
 
       // Ustawienie pozycji w widoku panelu
-      IF nParentDirPosition > aSelectedPanel[ _nMaxRow ] - 1
+      IF( nParentDirPosition > aSelectedPanel[ _nMaxRow ] - 1 )
          aSelectedPanel[ _nRowNo ]  := nParentDirPosition % ( aSelectedPanel[ _nMaxRow ] - 1 )
          aSelectedPanel[ _nRowBar ] := aSelectedPanel[ _nMaxRow ] - 1
       ELSE
