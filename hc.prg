@@ -223,8 +223,8 @@ PROCEDURE Main()
                               aActivePanel[ _cCmdOutput ] := hc_executeAndCapture( aActivePanel[ _cCmdLine ] )
                            ENDIF
 
-                           aActivePanel[ _cCmdLine ] := ""
-                           aActivePanel[ _nCmdCol ]  := 0
+                           //aActivePanel[ _cCmdLine ] := ""
+                           //aActivePanel[ _nCmdCol ]  := 0
 
                            hc_refreshPanels( pApp, aActivePanel, aLeftPanel, aRightPanel, lVisiblePanels )
 
@@ -852,8 +852,6 @@ Harbour C Code
 ************************************************************************* */
 #pragma BEGINDUMP
 
-#include <hbapi.h>
-
 #if defined( _WIN32 ) || defined( _WIN64 )
 #include <direct.h>
 #include <windows.h>
@@ -864,6 +862,9 @@ Harbour C Code
 #include <unistd.h>
 #define PATH_MAX         4096  /* Chars in a path name including nul */
 #endif
+
+// Harbour
+#include <hbapi.h>
 
 typedef enum _bool bool;
 enum _bool
@@ -1092,19 +1093,17 @@ HB_FUNC( HC_EXECUTEANDCAPTURE )
 
    // Bufor dla przechwytywania wyników
    char result[ 256 ];
-   // Tablica dynamiczna na pełny wynik
-   char *fullOutput = hb_xgrab( 1 );
-   // Początkowy pusty ciąg
-   fullOutput[ 0 ] = '\0';
-
+   // Dynamiczna alokacja na pełny wynik
    size_t totalLength = 0;
+   char *fullOutput = hb_xgrab( 1 );
+   fullOutput[ 0 ] = '\0';
 
    // Czytaj linia po linii i przechwyć cały wynik
    while( fgets( result, sizeof( result ), fp ) != NULL )
    {
-      // Rezerwacja większej pamięci na wynik
       size_t lineLength = strlen( result );
       char *newOutput = hb_xrealloc( fullOutput, totalLength + lineLength + 1 );
+
       if( newOutput == NULL )
       {
          fprintf( stderr, "Memory allocation error.\n" );
