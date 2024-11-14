@@ -1,6 +1,6 @@
 # Harbour Commander
 
-`hc` is a lightweight, cross-platform file manager featuring a dual-pane interface. It is designed for speed and ease of use. 
+`hc` is a lightweight, cross-platform file manager featuring a dual-pane interface. It is designed for speed and ease of use.
 
 ### To build and run hc:
 
@@ -12,3 +12,4 @@ File manager [hc.c](hc.c)
 
 ![Main](./docs/assets/img/hc.png)
 
+![Main](./docs/assets/img/gcc.png)
