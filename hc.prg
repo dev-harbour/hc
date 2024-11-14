@@ -223,8 +223,8 @@ PROCEDURE Main()
                               aActivePanel[ _cCmdOutput ] := hc_executeAndCapture( aActivePanel[ _cCmdLine ] )
                            ENDIF
 
-                           //aActivePanel[ _cCmdLine ] := ""
-                           //aActivePanel[ _nCmdCol ]  := 0
+                           aActivePanel[ _cCmdLine ] := ""
+                           aActivePanel[ _nCmdCol ]  := 0
 
                            hc_refreshPanels( pApp, aActivePanel, aLeftPanel, aRightPanel, lVisiblePanels )
 
@@ -294,6 +294,28 @@ PROCEDURE Main()
                         IF( aActivePanel[ _nCmdCol ] > 0 )
                            aActivePanel[ _cCmdLine ] := Stuff( aActivePanel[ _cCmdLine ], aActivePanel[ _nCmdCol ], 1, "" )
                            aActivePanel[ _nCmdCol ]--
+                        ENDIF
+                        EXIT
+
+                     CASE SDLK_INSERT
+
+                        nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
+                        IF( aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] != ".." )
+
+                           IF( aActivePanel[ _aDirectory ][ nIndex ][ F_MODE ] )
+                              aActivePanel[ _aDirectory ][ nIndex ][ F_MODE ] := .F.
+                           ELSE
+                              aActivePanel[ _aDirectory ][ nIndex ][ F_MODE ] := .T.
+                           ENDIF
+
+                           IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 1 .AND. aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
+                              ++aActivePanel[ _nRowBar ]
+                           ELSE
+                              IF( aActivePanel[ _nRowNo ] + aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
+                                 ++aActivePanel[ _nRowNo ]
+                              ENDIF
+                           ENDIF
+
                         ENDIF
                         EXIT
 
@@ -573,9 +595,9 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
          IF( aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ] )
 
             IF( !aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
-               cSelectedColor := "323232/FF4D4D"
+               cSelectedColor := BLACK + "/" + LIGHT_RED
             ELSE
-               cSelectedColor := "323232/00FF00"
+               cSelectedColor := BLACK + "/" + LIGHT_GREEN
             ENDIF
 
          ELSE
@@ -600,17 +622,15 @@ hc_selectColor( cAttr, lMode ) --> cColor
 ------------------------------------------------------------------------- */
 STATIC FUNCTION hc_selectColor( cAttr, lMode )
 
-   LOCAL cColor
-
-   IF( lMode == .T. )
-      cColor := "EAEAEA/323232"  // Kolor dla pozostałych plików
-   ELSEIF cAttr $ "DH,AH"
-      cColor := "EAEAEA/72A0E5"
+   IF( !lMode )
+      RETURN WHITE + "/" + RED    // Kolor na zaznaczonych plikach
+   ELSEIF( cAttr == "HD" .OR. cAttr == "HA" )
+      RETURN  WHITE + "/" + CYAN  // Kolor dla ukrytych katalogów
    ELSE
-      cColor := "EAEAEA/B30000" // Kolor na zaznaczonych plikach
+      RETURN WHITE + "/" + BLACK  // Kolor dla pozostałych plików
    ENDIF
 
-RETURN cColor
+RETURN NIL
 
 /* -------------------------------------------------------------------------
 hc_findLongestName( aSelectedPanel ) --> nLongestName
