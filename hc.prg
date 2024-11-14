@@ -108,7 +108,9 @@ PROCEDURE Main()
 
    LOCAL cKeyChar
 
-   pApp := sdl_CreateWindow( 830, 450, "Harbour Commander", WHITE )
+   LOCAL aCmdOutput, i
+
+   pApp := sdl_CreateWindow( 801, 450, "Harbour Commander", WHITE )
 
    sdl_LoadFont( pApp, "./font/9x18.pcf.gz", 18 )
 
@@ -188,18 +190,20 @@ PROCEDURE Main()
 
                         IF( aActivePanel[ _cCmdLine ] == "" )
 
-                           nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
-                           IF( At( "D", aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
+                           IF( lVisiblePanels )
+                              nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
+                              IF( At( "D", aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
 
-                              cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
-                              IF( hc_isExecutable( cCommandLine ) )
-                                 hc_runApp( cCommandLine )
+                                 cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
+                                 IF( hc_isExecutable( cCommandLine ) )
+                                    hc_runApp( cCommandLine )
+                                 ELSE
+                                    hc_openFile( cCommandLine )
+                                 ENDIF
+
                               ELSE
-                                 hc_openFile( cCommandLine )
+                                 aActivePanel := hc_changeDir( aActivePanel )
                               ENDIF
-
-                           ELSE
-                              aActivePanel := hc_changeDir( aActivePanel )
                            ENDIF
 
                         ELSE
@@ -210,6 +214,8 @@ PROCEDURE Main()
 
                            IF( C_system( aActivePanel[ _cCmdLine ] ) == - 1 )
                               C_perror( e"\nError executing command\n" )
+                           ELSE
+                              aActivePanel[ _cCmdOutput ] := hc_executeAndCapture( aActivePanel[ _cCmdLine ] )
                            ENDIF
 
                            aActivePanel[ _cCmdLine ] := ""
@@ -390,6 +396,12 @@ PROCEDURE Main()
             sdl_setBackground( pApp, WHITE )
          ELSE
             sdl_setBackground( pApp, BLACK )
+
+            aCmdOutput := hb_ATokens( aActivePanel[ _cCmdOutput ], .T. )
+            FOR i := 1 TO Len( aCmdOutput )
+               sdl_drawFont( pApp, 1, i, aCmdOutput[ i ] , BLACK + "/" + RED )
+            NEXT
+
          ENDIF
 
          hc_drawCmdLine( pApp, aActivePanel, lVisiblePanels )
@@ -1047,6 +1059,62 @@ HB_FUNC( HC_CHDIR )
 
    hb_retl( T );  // Zwracamy T, jeśli zmiana katalogu się powiodła
    return;
+}
+
+// char *hc_executeAndCapture( const char *command )
+HB_FUNC( HC_EXECUTEANDCAPTURE )
+{
+   const char *command = hb_parc( 1 );
+
+   if( command == NULL || strlen( command ) == 0 )
+   {
+      fprintf( stderr, "Error: Command is empty.\n" );
+      hb_retc( "" );
+      return;
+   }
+
+   // Otwórz proces i przechwyć wynik
+   FILE *fp = popen( command, "r" );
+   if( fp == NULL )
+   {
+      fprintf( stderr, "Failed to run command: %s\n", command );
+      hb_retc( "" );
+      return;
+   }
+
+   // Bufor dla przechwytywania wyników
+   char result[ 256 ];
+   // Tablica dynamiczna na pełny wynik
+   char *fullOutput = hb_xgrab( 1 );
+   // Początkowy pusty ciąg
+   fullOutput[ 0 ] = '\0';
+
+   size_t totalLength = 0;
+
+   // Czytaj linia po linii i przechwyć cały wynik
+   while( fgets( result, sizeof( result ), fp ) != NULL )
+   {
+      // Rezerwacja większej pamięci na wynik
+      size_t lineLength = strlen( result );
+      fullOutput = hb_xrealloc( fullOutput, totalLength + lineLength + 1 );
+      if( fullOutput == NULL )
+      {
+         fprintf( stderr, "Memory allocation error.\n" );
+         pclose( fp );
+         hb_retc( "" );
+         return;
+      }
+
+      // Dodaj bieżącą linię do pełnego wyniku
+      strcat( fullOutput, result );
+      totalLength += lineLength;
+   }
+
+   pclose( fp );
+
+   hb_retc( fullOutput );
+
+   hb_xfree( fullOutput );
 }
 
 #pragma ENDDUMP
