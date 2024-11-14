@@ -563,9 +563,9 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
 
    // Rysowanie ramki dla aktywnego lub nieaktywnego panelu
    IF( aActivePanel == aSelectedPanel )
-      sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_DOUBLE, "F1F1F1/323232" )
+      sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_DOUBLE, WHITE + "/" + BLACK )
    ELSE
-      sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_SINGLE, "F1F1F1/323232" )
+      sdl_drawBox( pApp, aSelectedPanel[ _nCol ], aSelectedPanel[ _nRow ], aSelectedPanel[ _nMaxCol ], aSelectedPanel[ _nMaxRow ], BOX_SINGLE, WHITE + "/" + BLACK )
    ENDIF
 
    // Ustal najdłuższą nazwę, rozmiar i atrybut, by wyśrodkować elementy
