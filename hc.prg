@@ -59,6 +59,11 @@
 #define YELLOW           "F9F1A5"
 #define WHITE            "F2F2F2"
 // ---
+#define ATTR_REGULAR          "A"
+#define ATTR_EXECUTABLE       "E"
+#define ATTR_DIRECTORY        "D"
+#define ATTR_HIDDEN           "H"
+// ---
 #define _nCol                  1
 #define _nRow                  2
 #define _nMaxCol               3
@@ -193,7 +198,7 @@ PROCEDURE Main()
                            IF( lVisiblePanels )
                               // Określ indeks w panelu i sprawdź, czy wybrany element to katalog
                               nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
-                              IF( At( "D", aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
+                              IF( At( ATTR_DIRECTORY, aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
                                  // Przygotowanie pełnej ścieżki dla wybranego elementu
                                  cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
                                  // Sprawdzenie, czy element jest wykonywalnym plikiem
@@ -435,8 +440,6 @@ PROCEDURE Main()
 
       sdl_EndDraw( pApp )
 
-      HB_SYMBOL_UNUSED( nMaxCol )
-
    ENDDO
 
 RETURN
@@ -495,10 +498,10 @@ STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
    ASORT( aSelectedPanel[ _aDirectory ],,, { | x, y | ( x[ F_NAME ] == "." ) .AND. ( y[ F_NAME ] != ".." ) } )
 
    // 3. Zwykłe katalogi przed ukrytymi katalogami
-   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "H" $ x[ F_ATTR ] ) .AND. ( "H" $ y[ F_ATTR ] ) } )
+   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | ATTR_DIRECTORY $ x[ F_ATTR ] .AND. !( ATTR_HIDDEN $ x[ F_ATTR ] ) .AND. ( ATTR_HIDDEN $ y[ F_ATTR ] ) } )
 
    // 4. Katalogi przed plikami (bez względu na ukrycie)
-   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | "D" $ x[ F_ATTR ] .AND. !( "D" $ y[ F_ATTR ] ) } )
+   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | ATTR_DIRECTORY $ x[ F_ATTR ] .AND. !( ATTR_DIRECTORY $ y[ F_ATTR ] ) } )
 
 RETURN aSelectedPanel
 
@@ -720,7 +723,7 @@ STATIC FUNCTION hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLo
    cPadLAttr := PadL( cAttr, nLengthAttr )
 
    // Ustawienie "DIR" jako rozmiaru dla katalogów, inaczej wyświetlenie faktycznego rozmiaru
-   IF( "D" $ cAttr )
+   IF( ATTR_DIRECTORY $ cAttr )
       cPadLSize := PadL( "DIR", nLengthSize )
    ELSE
       cPadLSize := PadL( nSize, nLengthSize )
@@ -821,8 +824,8 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
    // Ustal indeks bieżącego katalogu lub pliku
    nIndex := aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
 
-   // Sprawdzamy, czy element jest katalogiem (czy zawiera atrybut "D")
-   IF( At( "D", aSelectedPanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
+   // Sprawdzamy, czy element jest katalogiem (czy zawiera atrybut ATTR_DIRECTORY)
+   IF( At( ATTR_DIRECTORY, aSelectedPanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
       RETURN aSelectedPanel
    ENDIF
 
