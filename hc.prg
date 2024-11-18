@@ -820,16 +820,12 @@ hc_changeDir( aSelectedPanel ) --> aSelectedPanel
 ------------------------------------------------------------------------- */
 STATIC FUNCTION hc_changeDir( aSelectedPanel )
 
+   LOCAL cSubString
    LOCAL nIndex, cDir, cDir0
    LOCAL nParentDirPosition
 
    // Ustal indeks bieżącego katalogu lub pliku
    nIndex := aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
-
-   // Sprawdzamy, czy element jest katalogiem (czy zawiera atrybut ATTR_DIRECTORY)
-   IF( At( ATTR_DIRECTORY, aSelectedPanel[ _aDirList ][ nIndex ][ F_ATTR ] ) == 0 )
-      RETURN aSelectedPanel
-   ENDIF
 
    // Jeśli element to katalog "..", przechodzimy do katalogu nadrzędnego
    IF( aSelectedPanel[ _aDirList ][ nIndex ][ F_NAME ] == ".." )
@@ -842,10 +838,13 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
       ENDIF
 
       // Nazwa katalogu nadrzędnego wyodrębniona z cDir
-      cDir0 := SubStr( cDir, RAt( hb_ps(), Left( cDir, Len( cDir ) - 1 ) ) + 1 )
+      cSubString := Left( cDir, Len( cDir ) - 1 )
+      cDir0 := SubStr( cDir, RAt( hb_ps(), cSubString ) + 1 )
       cDir0 := SubStr( cDir0, 1, Len( cDir0 ) - 1 )
+
       // Zaktualizowana ścieżka do nadrzędnego katalogu
-      cDir  := Left( cDir, RAt( hb_ps(), Left( cDir, Len( cDir ) - 1 ) ) )
+      cSubString := Left( cDir, Len( cDir ) - 1 )
+      cDir  := Left( cDir, RAt( hb_ps(), cSubString ) )
 
       // Aktualizujemy listę katalogów i plików
       aSelectedPanel := hc_fetchList( aSelectedPanel, cDir )
