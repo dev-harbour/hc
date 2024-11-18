@@ -69,7 +69,7 @@
 #define _nMaxCol               3
 #define _nMaxRow               4
 #define _cCurrentDir           5
-#define _aDirectory            6
+#define _aDirList              6
 #define _nItemCount            7
 #define _nRowBar               8
 #define _nRowNo                9
@@ -198,9 +198,9 @@ PROCEDURE Main()
                            IF( lVisiblePanels )
                               // Określ indeks w panelu i sprawdź, czy wybrany element to katalog
                               nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
-                              IF( At( ATTR_DIRECTORY, aActivePanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
+                              IF( At( ATTR_DIRECTORY, aActivePanel[ _aDirList ][ nIndex ][ F_ATTR ] ) == 0 )
                                  // Przygotowanie pełnej ścieżki dla wybranego elementu
-                                 cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] + '"'
+                                 cCommandLine := '"' + aActivePanel[ _cCurrentDir ] + aActivePanel[ _aDirList ][ nIndex ][ F_NAME ] + '"'
                                  // Sprawdzenie, czy element jest wykonywalnym plikiem
                                  IF( hc_isExecutable( cCommandLine ) )
                                     hc_runApp( cCommandLine )
@@ -243,12 +243,14 @@ PROCEDURE Main()
                               aActivePanel := aRightPanel
                               aActivePanel[ _cCmdLine ] := aLeftPanel[ _cCmdLine ]
                               aActivePanel[ _nCmdCol  ] := aLeftPanel[ _nCmdCol ]
+
                               aLeftPanel[   _cCmdLine ] := ""
                               aLeftPanel[   _nCmdCol  ] := 0
                            ELSE
                               aActivePanel := aLeftPanel
                               aActivePanel[ _cCmdLine ] := aRightPanel[ _cCmdLine ]
                               aActivePanel[ _nCmdCol  ] := aRightPanel[ _nCmdCol ]
+
                               aRightPanel[  _cCmdLine ] := ""
                               aRightPanel[  _nCmdCol  ] := 0
                            ENDIF
@@ -305,12 +307,12 @@ PROCEDURE Main()
                      CASE SDLK_INSERT
 
                         nIndex := aActivePanel[ _nRowBar ] + aActivePanel[ _nRowNo ]
-                        IF( aActivePanel[ _aDirectory ][ nIndex ][ F_NAME ] != ".." )
+                        IF( aActivePanel[ _aDirList ][ nIndex ][ F_NAME ] != ".." )
 
-                           IF( aActivePanel[ _aDirectory ][ nIndex ][ F_MODE ] )
-                              aActivePanel[ _aDirectory ][ nIndex ][ F_MODE ] := .F.
+                           IF( aActivePanel[ _aDirList ][ nIndex ][ F_MODE ] )
+                              aActivePanel[ _aDirList ][ nIndex ][ F_MODE ] := .F.
                            ELSE
-                              aActivePanel[ _aDirectory ][ nIndex ][ F_MODE ] := .T.
+                              aActivePanel[ _aDirList ][ nIndex ][ F_MODE ] := .T.
                            ENDIF
 
                            IF( aActivePanel[ _nRowBar ] < aActivePanel[ _nMaxRow ] - 1 .AND. aActivePanel[ _nRowBar ] <= aActivePanel[ _nItemCount ] - 1 )
@@ -458,7 +460,7 @@ STATIC FUNCTION hc_init()
    aPanel[ _nMaxCol           ] :=  0
    aPanel[ _nMaxRow           ] :=  0
    aPanel[ _cCurrentDir       ] :=  ""
-   aPanel[ _aDirectory        ] :=  {}
+   aPanel[ _aDirList          ] :=  {}
    aPanel[ _nItemCount        ] :=  0
    aPanel[ _nRowBar           ] :=  1
    aPanel[ _nRowNo            ] :=  0
@@ -475,33 +477,33 @@ STATIC FUNCTION hc_init()
    RETURN aPanel
 
 /* -------------------------------------------------------------------------
-hc_fetchList( aSelectedPanel, cDir ) --> aSelectedPanel
+hc_fetchList( aSelectedPanel, cCurrentDir ) --> aSelectedPanel
 ------------------------------------------------------------------------- */
-STATIC FUNCTION hc_fetchList( aSelectedPanel, cDir )
+STATIC FUNCTION hc_fetchList( aSelectedPanel, cCurrentDir )
 
    // Ustawienie bieżącego katalogu
-   aSelectedPanel[ _cCurrentDir ] := hb_defaultValue( cDir, hb_cwd() )
-   aSelectedPanel[ _aDirectory ] := Directory( aSelectedPanel[ _cCurrentDir ], "HSD" )
+   aSelectedPanel[ _cCurrentDir ] := hb_defaultValue( cCurrentDir, hb_cwd() )
+   aSelectedPanel[ _aDirList ]    := Directory( aSelectedPanel[ _cCurrentDir ], "HSD" )
 
    // Usunięcie wpisu bieżącego katalogu "." z listy
-   hb_ADel( aSelectedPanel[ _aDirectory ], AScan( aSelectedPanel[ _aDirectory ], { | x | x[ F_NAME ] == "." } ), .T. )
+   hb_ADel( aSelectedPanel[ _aDirList ], AScan( aSelectedPanel[ _aDirList ], { | x | x[ F_NAME ] == "." } ), .T. )
 
    // Dodanie wartości logicznej `.T.` na końcu każdego wpisu w tablicy
-   AEval( aSelectedPanel[ _aDirectory ], { | x | AAdd( x, .T. ) } )
+   AEval( aSelectedPanel[ _aDirList ], { | x | AAdd( x, .T. ) } )
 
-   aSelectedPanel[ _nItemCount ] := Len( aSelectedPanel[ _aDirectory ] )
+   aSelectedPanel[ _nItemCount ] := Len( aSelectedPanel[ _aDirList ] )
 
    // 1. Katalog ".." zawsze na początku
-   ASort( aSelectedPanel[ _aDirectory ],,, { | x | x[ F_NAME ] == ".." } )
+   ASort( aSelectedPanel[ _aDirList ],,, { | x | x[ F_NAME ] == ".." } )
 
    // 2. Katalog "." zaraz po ".." (nie jest drukowany w hc_drawPanel )
-   ASORT( aSelectedPanel[ _aDirectory ],,, { | x, y | ( x[ F_NAME ] == "." ) .AND. ( y[ F_NAME ] != ".." ) } )
+   ASORT( aSelectedPanel[ _aDirList ],,, { | x, y | ( x[ F_NAME ] == "." ) .AND. ( y[ F_NAME ] != ".." ) } )
 
    // 3. Zwykłe katalogi przed ukrytymi katalogami
-   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | ATTR_DIRECTORY $ x[ F_ATTR ] .AND. !( ATTR_HIDDEN $ x[ F_ATTR ] ) .AND. ( ATTR_HIDDEN $ y[ F_ATTR ] ) } )
+   ASort( aSelectedPanel[ _aDirList ],,, { | x, y | ATTR_DIRECTORY $ x[ F_ATTR ] .AND. !( ATTR_HIDDEN $ x[ F_ATTR ] ) .AND. ( ATTR_HIDDEN $ y[ F_ATTR ] ) } )
 
    // 4. Katalogi przed plikami (bez względu na ukrycie)
-   ASort( aSelectedPanel[ _aDirectory ],,, { | x, y | ATTR_DIRECTORY $ x[ F_ATTR ] .AND. !( ATTR_DIRECTORY $ y[ F_ATTR ] ) } )
+   ASort( aSelectedPanel[ _aDirList ],,, { | x, y | ATTR_DIRECTORY $ x[ F_ATTR ] .AND. !( ATTR_DIRECTORY $ y[ F_ATTR ] ) } )
 
 RETURN aSelectedPanel
 
@@ -585,11 +587,11 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
 
          // Utwórz wyśrodkowany ciąg z informacjami o pliku lub katalogu
          cPaddedString := hc_paddedString( aSelectedPanel, nLongestName, nLongestSize, nLongestAttr,;
-            aSelectedPanel[ _aDirectory ][ i ][ F_NAME ],;
-            aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ],;
-            aSelectedPanel[ _aDirectory ][ i ][ F_DATE ],;
-            aSelectedPanel[ _aDirectory ][ i ][ F_TIME ],;
-            aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
+            aSelectedPanel[ _aDirList ][ i ][ F_NAME ],;
+            aSelectedPanel[ _aDirList ][ i ][ F_SIZE ],;
+            aSelectedPanel[ _aDirList ][ i ][ F_DATE ],;
+            aSelectedPanel[ _aDirList ][ i ][ F_TIME ],;
+            aSelectedPanel[ _aDirList ][ i ][ F_ATTR ] )
 
          // Wyśrodkuj ciąg w kolumnie
          cPaddedResult := PadR( cPaddedString, aSelectedPanel[ _nMaxCol ] - 2 )
@@ -597,7 +599,7 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
          // Ustaw kolor dla aktywnego elementu, zależnie od jego stanu
          IF( aActivePanel == aSelectedPanel .AND. i == aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ] )
 
-            IF( !aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
+            IF( !aSelectedPanel[ _aDirList ][ i ][ F_MODE ] )
                cSelectedColor := BLACK + "/" + LIGHT_RED
             ELSE
                cSelectedColor := BLACK + "/" + LIGHT_GREEN
@@ -605,7 +607,7 @@ STATIC PROCEDURE hc_drawPanel( pApp, aActivePanel, aSelectedPanel )
 
          ELSE
             // Ustaw kolor na podstawie atrybutów pliku
-            cSelectedColor := hc_selectColor( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ], aSelectedPanel[ _aDirectory ][ i ][ F_MODE ] )
+            cSelectedColor := hc_selectColor( aSelectedPanel[ _aDirList ][ i ][ F_ATTR ], aSelectedPanel[ _aDirList ][ i ][ F_MODE ] )
          ENDIF
 
          // Rysowanie tekstu z określonym kolorem w danym wierszu
@@ -646,7 +648,7 @@ STATIC FUNCTION hc_findLongestName( aSelectedPanel )
 
    FOR i := 1 TO aSelectedPanel[ _nItemCount ]
 
-      nCurrentNameLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_NAME ] )
+      nCurrentNameLength := Len( aSelectedPanel[ _aDirList ][ i ][ F_NAME ] )
 
       IF( nCurrentNameLength > nLongestName )
          nLongestName := nCurrentNameLength
@@ -667,7 +669,7 @@ STATIC FUNCTION hc_findLongestSize( aSelectedPanel )
 
    FOR i := 1 TO aSelectedPanel[ _nItemCount ]
 
-      nCurrentSizeLength := LenNum( aSelectedPanel[ _aDirectory ][ i ][ F_SIZE ] )
+      nCurrentSizeLength := LenNum( aSelectedPanel[ _aDirList ][ i ][ F_SIZE ] )
 
       IF( nCurrentSizeLength > nLongestSize )
          nLongestSize := nCurrentSizeLength
@@ -688,7 +690,7 @@ STATIC FUNCTION hc_findLongestAttr( aSelectedPanel )
 
    FOR i := 1 TO aSelectedPanel[ _nItemCount ]
 
-      currentAttrLength := Len( aSelectedPanel[ _aDirectory ][ i ][ F_ATTR ] )
+      currentAttrLength := Len( aSelectedPanel[ _aDirList ][ i ][ F_ATTR ] )
 
       IF( currentAttrLength > nLongestAttr )
          nLongestAttr := currentAttrLength
@@ -825,12 +827,12 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
    nIndex := aSelectedPanel[ _nRowBar ] + aSelectedPanel[ _nRowNo ]
 
    // Sprawdzamy, czy element jest katalogiem (czy zawiera atrybut ATTR_DIRECTORY)
-   IF( At( ATTR_DIRECTORY, aSelectedPanel[ _aDirectory ][ nIndex ][ F_ATTR ] ) == 0 )
+   IF( At( ATTR_DIRECTORY, aSelectedPanel[ _aDirList ][ nIndex ][ F_ATTR ] ) == 0 )
       RETURN aSelectedPanel
    ENDIF
 
    // Jeśli element to katalog "..", przechodzimy do katalogu nadrzędnego
-   IF( aSelectedPanel[ _aDirectory ][ nIndex ][ F_NAME ] == ".." )
+   IF( aSelectedPanel[ _aDirList ][ nIndex ][ F_NAME ] == ".." )
       // Pełna ścieżka do bieżącego katalogu
       cDir := aSelectedPanel[ _cCurrentDir ]
 
@@ -849,7 +851,7 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
       aSelectedPanel := hc_fetchList( aSelectedPanel, cDir )
 
       // Znajdujemy pozycję nadrzędnego katalogu w tablicy
-      nParentDirPosition := Max( AScan( aSelectedPanel[ _aDirectory ], { | x | x[ F_NAME ] == cDir0 } ), 1 )
+      nParentDirPosition := Max( AScan( aSelectedPanel[ _aDirList ], { | x | x[ F_NAME ] == cDir0 } ), 1 )
 
       // Ustawienie pozycji w widoku panelu
       IF( nParentDirPosition > aSelectedPanel[ _nMaxRow ] - 1 )
@@ -862,7 +864,7 @@ STATIC FUNCTION hc_changeDir( aSelectedPanel )
 
    ELSE
       // Przechodzimy do wybranego katalogu
-      cDir := aSelectedPanel[ _cCurrentDir ] + aSelectedPanel[ _aDirectory ][ nIndex ][ F_NAME ] + hb_ps()
+      cDir := aSelectedPanel[ _cCurrentDir ] + aSelectedPanel[ _aDirList ][ nIndex ][ F_NAME ] + hb_ps()
       aSelectedPanel[ _nRowBar ] := 1
       aSelectedPanel[ _nRowNo ]  := 0
       aSelectedPanel := hc_fetchList( aSelectedPanel, cDir )
